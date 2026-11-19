@@ -562,6 +562,9 @@ html,body{overscroll-behavior:none}
 #ntb{position:fixed;top:calc(66px + env(safe-area-inset-top,0px));left:12px;right:12px;max-width:520px;margin:0 auto;z-index:70;display:none;align-items:center;background:rgba(18,22,34,.97);color:#e8edf7;border:1px solid #b45309;border-left:5px solid #f59e0b;border-radius:18px;padding:12px 44px 12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.4)}
 #ntb b{display:block;font-size:15px;letter-spacing:.4px;color:#fbbf24}#ntb span{display:block;font-size:12px;color:#9aa6c0;margin-top:2px}
 #ntb button{position:absolute;top:9px;right:10px;width:26px;height:26px;border-radius:50%;border:1px solid #3a4566;background:rgba(255,255,255,.08);color:#c9d3ee;font:700 16px/1 system-ui;padding:0;cursor:pointer}
+.xqw{margin-top:6px}.xq{display:flex;gap:8px;margin:8px 0 6px;width:100%}.xq>div{flex:1;min-width:0}.xq label{display:block;font:600 11px system-ui,sans-serif;opacity:.85;margin:0 0 3px}.xq input{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#fff;font:700 14px system-ui,sans-serif}
+#sg .sgq{display:block;margin-top:6px}#sg .sgq[hidden],#sg.mini:not(.open) .sgq{display:none}
+.ecr{flex-wrap:wrap}.ecr .xqw{flex:1 1 100%}
 </style><style>.cx{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px}.cxh{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.cxt{font-size:19px;font-weight:800;margin:2px 0}.cxv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.cxv div{border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center}.cxv small{display:block;color:var(--mut);font-size:11px;text-transform:uppercase}.cxb{font-weight:800;margin:6px 0}.cx details{margin-top:8px}.cx summary{cursor:pointer;color:var(--hi);font-weight:700}.cx h4{margin:12px 0 2px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}.cx p{margin:2px 0 6px}.cx .nw-bar{margin:10px 0 0}#cxq{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:inherit;font:inherit}</style>
 <style>
 #ecb{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:66px;z-index:60;height:46px;padding:0 14px 0 10px;border-radius:23px;border:1px solid var(--hi);background:var(--card);color:var(--hi);display:flex;align-items:center;gap:8px;font:700 11px/1.15 system-ui,sans-serif;text-align:left;cursor:pointer;box-shadow:0 0 16px var(--glow)}
@@ -591,7 +594,7 @@ html,body{overscroll-behavior:none}
 <button id="mb" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mp"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
 <div id="mp" hidden><h2>Signal history</h2><div id="sgh"></div><div class="sws" id="tm" hidden></div></div>
 <div id="bn" role="status"><i></i><div><b>TEZMO PRO EA</b><span id="bs"></span></div></div>
-<div id="sg" role="status" aria-live="polite"><i></i><div><b></b><span></span><em class="sgm"></em><button type="button" class="sgex" hidden></button></div><button type="button" class="sgx" aria-label="Dismiss this signal" title="Dismiss">×</button></div>
+<div id="sg" role="status" aria-live="polite"><i></i><div><b></b><span></span><em class="sgm"></em><div class="sgq" hidden></div><button type="button" class="sgex" hidden></button></div><button type="button" class="sgx" aria-label="Dismiss this signal" title="Dismiss">×</button></div>
 <main>
 <div class="tab on" id="t-home">
 <button id="mic" type="button" aria-label="Talk to the AI"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><div id="micout" hidden role="status"></div><button id="ecb" type="button" aria-label="Economic calendar"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg><span>Economic<br>calendar</span></button>
@@ -699,7 +702,6 @@ html,body{overscroll-behavior:none}
 <div id="mtinfo" class="lv"></div>
 <div class="row" style="margin-top:6px">
 <div><label for="mtlot">Lot size per trade</label><input id="mtlot" type="number" step="0.01" min="0.01" value="0.01"></div>
-<div><label for="mtsfx">Symbol suffix (optional)</label><input id="mtsfx" placeholder="e.g. m, c, # or .pro" autocomplete="off" spellcheck="false"></div>
 </div>
 <label class="xmk" style="margin:10px 0 0"><input type="checkbox" id="mtone" checked> <span>Block a new trade if I already have an open position on the same symbol</span></label>
 <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap"><button id="mtrf" class="sec" type="button">Refresh</button><button id="mtdc" class="dng" type="button">Disconnect</button></div>
@@ -2377,8 +2379,8 @@ const rng=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
 const BROKERS={
   just:{real:['JustMarkets-Live','JustMarkets-Live2','JustMarkets-Live3'],demo:['JustMarkets-Demo','JustMarkets-Demo2','JustMarkets-Demo3']}
 };
-const ALIAS={XAUUSD:['XAUUSD','GOLD'],XAGUSD:['XAGUSD','SILVER'],US30:['US30','US30Cash','DJ30','WS30','DJI30','USA30'],NAS100:['NAS100','US100','US100Cash','USTEC','NDX100','USTECH100'],SPX500:['SPX500','US500','US500Cash','SP500'],GER40:['GER40','DE40','DAX40','GER30','DE30'],UK100:['UK100','FTSE100'],USOIL:['USOIL','WTI','XTIUSD','USOUSD']};
-const SUFS=['m','c','.pro','#','.a','.raw'];
+const ALIAS={BTCUSD:['BTCUSD','BITCOIN','XBTUSD'],ETHUSD:['ETHUSD','ETHEREUM'],XAUUSD:['XAUUSD','GOLD'],XAGUSD:['XAGUSD','SILVER'],US30:['US30','US30Cash','DJ30','WS30','DJI30','USA30'],NAS100:['NAS100','US100','US100Cash','USTEC','NDX100','USTECH100'],SPX500:['SPX500','US500','US500Cash','SP500'],GER40:['GER40','DE40','DAX40','GER30','DE30'],UK100:['UK100','FTSE100'],USOIL:['USOIL','WTI','XTIUSD','USOUSD']};
+const SUFS=['m','c','.pro','#','.a','.raw','_c','_x','_z','_i','.','+','-','.m','.c'];
 var MT={};try{MT=JSON.parse(ls('ifx_mt')||'{}')||{}}catch(e){MT={}}
 let mtSel={br:'just'};
 const mtSave=()=>ls('ifx_mt',JSON.stringify({id:MT.id||'',br:MT.br||'',login:MT.login||'',server:MT.server||''}));
@@ -2507,7 +2509,6 @@ $('mtdc').onclick=()=>{
   mtSt('');mtDrawPick();if(o.server)mtSetServer(o.server);mtDraw();
 };
 $('mtlot').value=ls('ifx_lot')||'0.01';$('mtlot').onchange=()=>ls('ifx_lot',$('mtlot').value);
-$('mtsfx').value=ls('ifx_sfx');$('mtsfx').onchange=()=>{ls('ifx_sfx',$('mtsfx').value.trim());MT.map={}};
 $('mtone').checked=ls('ifx_one')!=='0';$('mtone').onchange=()=>ls('ifx_one',$('mtone').checked?'1':'0');
 $('mtkey').value=MT.key||'';$('mtid').value=MT.id||'';$('mtlogin').value=MT.login||'';
 function mtSetServer(sv){const s=$('mtsrv');if([...s.options].some(o=>o.value===sv))s.value=sv;else{s.value='__o';$('mtcs').value=sv}$('mtcw').hidden=s.value!=='__o'}
@@ -2520,23 +2521,53 @@ async function mtQuote(sym){
     const q=(await mtf('/GetQuote','&symbol='+encodeURIComponent(sym))).json||{};
     if(mtNum(q.bid)&&mtNum(q.ask)&&q.bid>0&&q.ask>0)return q;
     const t=(await mtf('/SymbolInfoTick','&symbol='+encodeURIComponent(sym))).json||{};
-    return mtNum(t.bid)&&mtNum(t.ask)&&t.bid>0&&t.ask>0?t:null;
-  }catch(e){if([401,403,429].includes(e.status)||/reach/i.test(e.message))throw e;return null}
+    if(mtNum(t.bid)&&mtNum(t.ask)&&t.bid>0&&t.ask>0)return t;
+    const k=(await mtf('/Quote','&symbol='+encodeURIComponent(sym))).json||{};
+    return mtNum(k.bid)&&mtNum(k.ask)&&k.bid>0&&k.ask>0?k:null;
+  }catch(e){if([401,403,429].includes(e.status)||/reach/i.test(e.message))throw e;mtLastErr=String(e.message||'').slice(0,120);if([404,405].includes(e.status))mtQMiss++;return null}
+}
+let mtSymList=null,mtSymAt=0,mtLastErr='',mtQMiss=0;
+async function mtSymbols(){
+  if(mtSymList&&Date.now()-mtSymAt<6e5)return mtSymList;
+  try{
+    const r=(await mtf('/Symbols')).json;
+    let a=Array.isArray(r)?r:(r&&(r.symbols||r.Symbols||r.data))||[];
+    a=a.map(x=>typeof x==='string'?x:(x&&(x.symbol||x.name||x.Symbol||x.Name))||'').filter(Boolean);
+    if(a.length){mtSymList=a;mtSymAt=Date.now();return a}
+  }catch(e){if([401,403,429].includes(e.status)||/reach/i.test(e.message))throw e}
+  return [];
+}
+async function mtCands(base){
+  const al=ALIAS[base]||[base],tries=[];
+  const list=await mtSymbols(),nrm=x=>String(x).toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(list.length){
+    const found=[];
+    al.forEach((a,ai)=>list.forEach(n=>{const m=nrm(n);if(m===a||(m.startsWith(a)&&m.length-a.length<=3))found.push([ai,m.length-a.length,n])}));
+    found.sort((x,y)=>x[0]-y[0]||x[1]-y[1]).forEach(f=>tries.push(f[2]));
+  }
+  al.forEach(a=>tries.push(a));
+  al.slice(0,2).forEach(a=>SUFS.forEach(x=>tries.push(a+x)));
+  return [...new Set(tries)].slice(0,40);
 }
 async function mtResolve(sym){
   const base=String(sym||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(!base)throw new Error('No symbol to trade.');
   MT.map=MT.map||{};
-  const sfx=($('mtsfx').value||'').trim();
-  if(MT.map[base+'|'+sfx])return MT.map[base+'|'+sfx];
-  const al=ALIAS[base]||[base],tries=[];
-  if(sfx)al.forEach(a=>tries.push(a+sfx));
-  al.forEach(a=>tries.push(a));
-  al.slice(0,2).forEach(a=>SUFS.forEach(s=>tries.push(a+s)));
-  for(const t of [...new Set(tries)]){
-    if(await mtQuote(t)){MT.map[base+'|'+sfx]=t;return t}
+  if(MT.map[base])return MT.map[base];
+  mtLastErr='';mtQMiss=0;
+  for(const t of await mtCands(base)){
+    if(await mtQuote(t)){MT.map[base]=t;return t}
+    if(mtQMiss>=2)break;   /* the price service itself is not answering, stop probing */
   }
-  throw new Error('Could not get a price for "'+sym+'" from your broker. The market may be closed, or the broker names it differently. Type the exact name from your MT5 Market Watch in the Symbol suffix box (for example m or c).');
+  const e=new Error('Could not get a price for "'+sym+'" from '+(BROKER_LABELS[MT.br]||'your broker')+(mtLastErr?' ('+mtLastErr+')':'')+'.');e.soft=true;throw e;
+}
+/* never blocks the trade: if no live price can be read, the order still goes to the broker at its own market price */
+async function mtResolveSoft(sym){
+  const base=String(sym||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  try{const n=await mtResolve(sym);return{name:n,cands:[n],q:await mtQuote(n)}}
+  catch(e){if(!e.soft)throw e}
+  const c=await mtCands(base);
+  return{name:c[0]||base,cands:c.slice(0,8),q:null};
 }
 async function mtSymSpec(bsym){
   /* Broker limits. Field names vary, so read several spellings. Anything missing stays null (unverified). */
@@ -2568,10 +2599,26 @@ function execRun(dir,sym,entry,sl,tp){
   entry=+entry;sl=+sl;tp=+tp;
   const bad=mtCheck(dir,entry,sl,tp);if(bad){alert(bad);return}
   mtOpenConfirm(dir,String(sym).toUpperCase(),entry,sl,tp,parseFloat(ls('ifx_lot'))||parseFloat($('mtlot').value)||0.01,parseInt(ls('ifx_cnt'),10)||1)}
+function execQty(){
+  const w=el('div',null,'xq');
+  const mk=(lab,val,step,min,max,mode,cl)=>{const d=el('div');const l=el('label',lab);const i=el('input',null,cl);i.type='number';i.step=step;i.min=min;if(max)i.max=max;i.inputMode=mode;i.value=val;
+    ['click','pointerdown','touchstart','keydown'].forEach(ev=>i.addEventListener(ev,e=>e.stopPropagation()));l.addEventListener('click',e=>e.stopPropagation());d.append(l,i);return[d,i]};
+  const [da,li]=mk('Lot size',ls('ifx_lot')||'0.01','0.01','0.01','','decimal','xql');
+  const [db,ci]=mk('Number of trades',ls('ifx_cnt')||'1','1','1',String(MAXN),'numeric','xqn');
+  w.append(da,db);w.lot=li;w.cnt=ci;
+  return w}
+function execQtyRead(w){
+  const l=parseFloat(w.lot.value),n=parseInt(w.cnt.value,10);
+  if(!(l>=0.01)){alert('Enter a lot size of at least 0.01.');w.lot.focus();return false}
+  if(!(n>=1&&n<=MAXN)){alert('Number of trades must be a whole number from 1 to '+MAXN+'.');w.cnt.focus();return false}
+  ls('ifx_lot',String(l));ls('ifx_cnt',String(n));const m=$('mtlot');if(m)m.value=String(l);return true}
 function execBtn(dir,sym,entry,sl,tp,cls,before){
+  const wrap=el('div',null,'xqw');
+  const q=execQty();
   const b=el('button',MT.id?'EXECUTE ON MT5':'CONNECT MT5 TO EXECUTE',cls==null?'pri xbtn xexec':cls);b.type='button';
-  b.onclick=ev=>{if(ev&&ev.stopPropagation)ev.stopPropagation();try{if(before)before()}catch(e){}execRun(dir,sym,entry,sl,tp)};
-  return b}
+  b.onclick=ev=>{if(ev&&ev.stopPropagation)ev.stopPropagation();if(MT.id&&!execQtyRead(q))return;try{if(before)before()}catch(e){}execRun(dir,sym,entry,sl,tp)};
+  if(MT.id)wrap.append(q);wrap.append(b);
+  return wrap}
 /* ---- scanner: execute button + confirmation ---- */
 function execBox(sig,sym,entry,sl,tp){
   const w=el('div',null,'xbox');
@@ -2591,7 +2638,7 @@ function execBox(sig,sym,entry,sl,tp){
   };
   li.oninput=upd;ci.oninput=upd;upd();
   const bt=el('button',MT.id?'Execute trade on MT5':'Connect MT5 to execute','pri xbtn');bt.type='button';
-  if(MT.id)w.appendChild(el('small','Sends market orders to your '+(BROKER_LABELS[MT.br]||'MT5')+' '+(mtIsDemo()?'DEMO':'REAL')+' account. You confirm on the next screen.'));
+  if(MT.id)w.appendChild(el('small','Sends market orders to your '+(BROKER_LABELS[MT.br]||'MT5')+' account. You confirm on the next screen.'));
   bt.onclick=()=>{
     if(!MT.id){tab('mt');return}
     if(bad){alert(bad);return}
@@ -2618,15 +2665,13 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
   const ov=el('div');ov.id='xm';const bx=el('div',null,'xmb');ov.appendChild(bx);document.body.appendChild(ov);
   ov.onclick=e=>{if(e.target===ov)mtClosePanel()};
   bx.appendChild(el('h2','Execute '+dir+' '+sym));
-  bx.firstChild.appendChild(el('span',demo?'DEMO':'REAL','mtb '+(demo?'demo':'real')));
   const body=el('div');bx.appendChild(body);
   {const bad=sigSides(dir,entry,sl,tp);if(bad){body.appendChild(el('p','Not sent: '+bad+'.','f'));const cb=el('button','Close');cb.type='button';cb.onclick=mtClosePanel;body.appendChild(cb);return}}
   body.appendChild(el('p','Checking your broker...','mut'));
   const pre={};
   try{
-    pre.bsym=await mtResolve(sym);
-    pre.q=await mtPrice(pre.bsym);
-    await mtRefresh();
+    {const rs=await mtResolveSoft(sym);pre.bsym=rs.name;pre.cands=rs.cands;pre.q=rs.q}
+    try{await mtRefresh()}catch(e){}
     pre.open=(MT.pos||[]).filter(p=>p.symbol===pre.bsym);
     pre.spec=await mtSymSpec(pre.bsym);
   }catch(e){
@@ -2634,14 +2679,14 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
     const c=el('button','Close','sec');c.type='button';c.onclick=mtClosePanel;body.appendChild(c);return;
   }
   body.textContent='';
-  const px=dir==='BUY'?pre.q.ask:pre.q.bid;
+  const px=pre.q?(dir==='BUY'?pre.q.ask:pre.q.bid):entry;
   const risk=Math.abs(entry-sl),drift=Math.abs(px-entry);
-  const past=dir==='BUY'?!(sl<px&&px<tp):!(tp<px&&px<sl);
-  const ot=orderKind(dir,entry,px,.2*risk),pend=ot!=='MARKET',OT=ot.replace(' ','_');
+  const past=pre.q?(dir==='BUY'?!(sl<px&&px<tp):!(tp<px&&px<sl)):false;
+  const ot=pre.q?orderKind(dir,entry,px,.2*risk):'MARKET',pend=ot!=='MARKET',OT=ot.replace(' ','_');
   const row=(n,v)=>{const r=el('div',null,'xmr');r.append(el('span',n),el('b',v));body.appendChild(r)};
   row('Account',(BROKER_LABELS[MT.br]||'MT5')+' / '+(MT.login||MT.id.slice(0,8)+'...')+(MT.server?' / '+MT.server:''));
   row('Broker symbol',pre.bsym);
-  row('Market price now',(dir==='BUY'?'ask ':'bid ')+fmtn(px));
+  row('Market price now',pre.q?(dir==='BUY'?'ask ':'bid ')+fmtn(px):'sent at the broker market price');
   row('Order type',pend?ot+' (pending order)':'MARKET (instant order)');
   row('AI entry',fmtn(entry));row('Stop loss',fmtn(sl));row('Take profit',fmtn(tp));
   if(pend)body.appendChild(el('small',orderNote(ot,fmtn(entry))));
@@ -2680,7 +2725,7 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
   ac.append(no,go);body.appendChild(ac);
   if(past||blockOne)go.disabled=true;
   const msg=el('div');body.appendChild(msg);
-  const ckU=(SP.ok&&SP.contract)?null:mkck('Broker limits or contract size could not be verified. I accept that lot size, margin and total risk were not checked.');
+  const ckU=null;
   const volErr=l=>{
     if(!SP.ok)return '';
     if(l<SP.min-1e-9)return 'Lot size is below the broker minimum ('+SP.min+').';
@@ -2718,13 +2763,29 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
       if($('mtone').checked){await mtRefresh();if((MT.pos||[]).some(p=>p.symbol===pre.bsym))throw new Error('There is already an open '+pre.bsym+' position, so no new order was sent. Check Open trades before trying again.')}
       for(let i=0;i<n;i++){
         go.textContent='Sending '+(i+1)+' of '+n+'...';
-        const q=await mtPrice(pre.bsym);
-        const cur=dir==='BUY'?q.ask:q.bid;
-        if(dir==='BUY'?!(sl<cur&&cur<tp):!(tp<cur&&cur<sl))throw new Error('Price moved past your stop loss or take profit. Order not sent.');
-        if(!pend&&Math.abs(cur-px)>risk*0.5)throw new Error('Price moved '+fmtn(+Math.abs(cur-px).toFixed(6))+' since you opened this screen. Order not sent.');
-        if(pend&&orderKind(dir,entry,cur,.2*risk)!==ot)throw new Error('The price moved, so this '+ot+' is no longer valid. Order not sent. Scan again.');
-        {const se=stopErr(cur);if(se)throw new Error(se)}
-        const r=await mtf('/OrderSend','',{body:{symbol:pre.bsym,operation:dir==='BUY'?0:1,volume:lots,stopLoss:sl,takeProfit:tp,comment:'TezmoPro',...(pend?{orderType:OT,price:entry}:{})}});
+        let cur=px;
+        const q=pre.q?await mtQuote(pre.bsym):null;
+        if(q){
+          cur=dir==='BUY'?q.ask:q.bid;
+          if(dir==='BUY'?!(sl<cur&&cur<tp):!(tp<cur&&cur<sl))throw new Error('Price moved past your stop loss or take profit. Order not sent.');
+          if(!pend&&Math.abs(cur-px)>risk*0.5)throw new Error('Price moved '+fmtn(+Math.abs(cur-px).toFixed(6))+' since you opened this screen. Order not sent.');
+          if(pend&&orderKind(dir,entry,cur,.2*risk)!==ot)throw new Error('The price moved, so this '+ot+' is no longer valid. Order not sent. Scan again.');
+          {const se=stopErr(cur);if(se)throw new Error(se)}
+        }
+        /* if the exact symbol name could not be confirmed, try the likely names until the broker accepts one */
+        let r=null,lastErr='';
+        const names=pre.q?[pre.bsym]:[pre.bsym,...(pre.cands||[]).filter(c=>c!==pre.bsym)].slice(0,8);
+        for(const sy of names){
+          try{
+            r=await mtf('/OrderSend','',{body:{symbol:sy,operation:dir==='BUY'?0:1,volume:lots,stopLoss:sl,takeProfit:tp,comment:'TezmoPro',...(pend?{orderType:OT,price:entry}:{})}});
+            const jj=typeof r.json==='object'&&r.json?r.json:{};
+            if(!mtOk(jj)&&!pre.q&&sent===0&&/symbol|unknown|not found|invalid/i.test(String(jj.comment||jj.message||''))){lastErr=String(jj.comment||jj.message);r=null;continue}
+            pre.bsym=sy;break;
+          }catch(e){
+            if(!pre.q&&sent===0&&/symbol|unknown|not found|invalid/i.test(e.message||'')){lastErr=e.message;r=null;continue}
+            throw e}
+        }
+        if(!r)throw new Error(lastErr||'The broker did not accept this symbol name.');
         const j=typeof r.json==='object'&&r.json?r.json:{};
         if(!mtOk(j))throw new Error((j.comment||j.message||'Broker did not accept the order')+(j.retcode!==undefined?' [retcode '+j.retcode+']':''));
         sent++;if(j.ticket)tickets.push(j.ticket);
@@ -4826,7 +4887,8 @@ function arbit(d,sym,Dscan){
   if(st&&s.sidst!==st){s.sidst=st;ls('ifx_banner',JSON.stringify(s));BOT.call('status',{id:s.sid,status:st},{'x-admin':ls('ifx_pubkey')}).catch(()=>{})}}}catch(e){}}}
 {const _pb2=paintBn;paintBn=function(s){_pb2.apply(this,arguments);
  try{const b=document.querySelector('#sg .sgex');if(!b)return;const ok=!!s&&!s.dismissed&&!s.done&&(s.sig==='BUY'||s.sig==='SELL')&&s.enN>0&&s.slN>0&&s.tpN>0;b.hidden=!ok;
-  if(ok){b.textContent=MT.id?'EXECUTE '+(s.ot&&s.ot!=='MARKET'?s.ot:s.sig)+' ON MT5':'CONNECT MT5 TO EXECUTE';b.onclick=ev=>{ev.stopPropagation();execRun(s.sig,s.sym,s.enN,s.slN,s.tpN)}}}catch(e){}}}
+  const qb=document.querySelector('#sg .sgq');if(qb){if(!ok||!MT.id){qb.hidden=true}else{if(!qb.firstChild){const q=execQty();qb.appendChild(q);qb._q=q}else{qb._q.lot.value=ls('ifx_lot')||'0.01';qb._q.cnt.value=ls('ifx_cnt')||'1'}qb.hidden=false}}
+  if(ok){b.textContent=MT.id?'EXECUTE '+(s.ot&&s.ot!=='MARKET'?s.ot:s.sig)+' ON MT5':'CONNECT MT5 TO EXECUTE';b.onclick=ev=>{ev.stopPropagation();if(MT.id&&qb&&qb._q&&!execQtyRead(qb._q))return;execRun(s.sig,s.sym,s.enN,s.slN,s.tpN)}}}catch(e){}}}
 {const _og=openGate;openGate=function(j,ds,F,sr){const r=_og.apply(this,arguments);try{openThin(j)}catch(e){}return r}}
 window.__addMacro=addMacro;window.bqResolve=bqResolve;window.bqQuote=bqQuote;
 codePat=function(D,d){const good=[],bad=[];
