@@ -2413,7 +2413,7 @@ async function mtf(path,q,o){
     else if(p==='/OrderSend'){
       const cap=w=>w.charAt(0)+w.slice(1).toLowerCase();
       P.set('symbol',b.symbol);P.set('operation',b.orderType?String(b.orderType).split('_').map(cap).join(''):(b.operation===0?'Buy':'Sell'));
-      P.set('volume',b.volume);P.set('price',b.price||0);P.set('slippage',10);P.set('stoploss',b.stopLoss||0);P.set('takeprofit',b.takeProfit||0);P.set('comment',b.comment||'TezmoPro')}
+      P.set('volume',b.volume);P.set('price',b.price||0);P.set('slippage',10);P.set('stoploss',b.stopLoss||0);P.set('takeprofit',b.takeProfit||0);P.set('comment',b.comment||'ANTONIO_BANDER00_TEZMOPRO')}
   }
   let r,txt;
   try{r=await fetch(MT_URL+p+'?'+P.toString(),{headers:{accept:'application/json, text/plain'}});txt=await r.text()}
@@ -2830,7 +2830,7 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
         const names=pre.q?[pre.bsym]:[pre.bsym,...(pre.cands||[]).filter(c=>c!==pre.bsym)].slice(0,8);
         for(const sy of names){
           try{
-            r=await mtf('/OrderSend','',{body:{symbol:sy,operation:dir==='BUY'?0:1,volume:lots,stopLoss:sl,takeProfit:tp,comment:'TezmoPro',...(pend?{orderType:OT,price:entry}:{})}});
+            r=await mtf('/OrderSend','',{body:{symbol:sy,operation:dir==='BUY'?0:1,volume:lots,stopLoss:sl,takeProfit:tp,comment:'ANTONIO_BANDER00_TEZMOPRO',...(pend?{orderType:OT,price:entry}:{})}});
             const jj=typeof r.json==='object'&&r.json?r.json:{};
             if(!mtOk(jj)&&!pre.q&&sent===0&&/symbol|unknown|not found|invalid/i.test(String(jj.comment||jj.message||''))){lastErr=String(jj.comment||jj.message);r=null;continue}
             pre.bsym=sy;break;
