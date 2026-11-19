@@ -565,6 +565,20 @@ html,body{overscroll-behavior:none}
 .xqw{margin-top:6px}.xq{display:flex;gap:8px;margin:8px 0 6px;width:100%}.xq>div{flex:1;min-width:0}.xq label{display:block;font:600 11px system-ui,sans-serif;opacity:.85;margin:0 0 3px}.xq input{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#fff;font:700 14px system-ui,sans-serif}
 #sg .sgq{display:block;margin-top:6px}#sg .sgq[hidden],#sg.mini:not(.open) .sgq{display:none}
 .ecr{flex-wrap:wrap}.ecr .xqw{flex:1 1 100%}
+.spn{margin:12px 0;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.spn-sym{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:12px}
+.spn-name{flex:1;min-width:0;font:800 18px system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spn-pen{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:none;color:inherit;font-size:17px;cursor:pointer;padding:0}
+.spn-in{flex:1;min-width:0;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;font:700 16px system-ui,sans-serif}
+.spn-ok{flex:none;padding:8px 14px;border-radius:8px;border:0;background:var(--acc);color:#fff;font:700 14px system-ui,sans-serif;cursor:pointer}
+.spn-lab{font:700 12px system-ui,sans-serif;letter-spacing:1.5px;color:var(--mut);margin:12px 0 6px}
+.spn-rec{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.spn-rec b{font:800 30px system-ui,sans-serif}.spn-rec b.BUY{color:var(--buy)}.spn-rec b.SELL{color:var(--sell)}
+.spn-cf{padding:8px 14px;border-radius:999px;border:1px solid var(--line);font:700 14px system-ui,sans-serif;white-space:nowrap}
+.spn-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.spn-row span{color:var(--mut)}.spn-row b{font:800 18px ui-monospace,Consolas,monospace}
+.spn-why{margin:8px 0 0}.spn-note{display:block;margin-top:8px;color:var(--mut)}
+.spn .xbox{margin:14px 0 0}
 </style><style>.cx{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px}.cxh{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.cxt{font-size:19px;font-weight:800;margin:2px 0}.cxv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.cxv div{border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center}.cxv small{display:block;color:var(--mut);font-size:11px;text-transform:uppercase}.cxb{font-weight:800;margin:6px 0}.cx details{margin-top:8px}.cx summary{cursor:pointer;color:var(--hi);font-weight:700}.cx h4{margin:12px 0 2px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}.cx p{margin:2px 0 6px}.cx .nw-bar{margin:10px 0 0}#cxq{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:inherit;font:inherit}</style>
 <style>
 #ecb{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:66px;z-index:60;height:46px;padding:0 14px 0 10px;border-radius:23px;border:1px solid var(--hi);background:var(--card);color:var(--hi);display:flex;align-items:center;gap:8px;font:700 11px/1.15 system-ui,sans-serif;text-align:left;cursor:pointer;box-shadow:0 0 16px var(--glow)}
@@ -1421,6 +1435,7 @@ function show(d){
   }
   if(sig==='NO_TRADE'&&!why)why=waitWhy||((d.trigger&&d.trigger.why)?((/^(WAIT|NO SETUP)/i.test(d.trigger.why)?'':'NO SETUP: ')+d.trigger.why):'NO SETUP: no clear structure right now.');
   why=(String(why).match(/^.*?[.!?](?=\s|$)/)||[String(why)])[0];
+  if(sig!=='NO_TRADE'&&entry>0&&sl>0){const t15=tp15(sig,entry,sl);if(t15){tp=t15;d.tp=t15}}
   const sym=symv()||d.symbol||'Chart';
   const symK=String(sym).toUpperCase().replace(/[^A-Z0-9].*$/,''),sd=window.__scanD&&window.__scanD.sym===symK?window.__scanD:null,oc=sd?ordCtx(sd):{px:null,tol:0},ot=sig!=='NO_TRADE'?orderKind(sig,entry,oc.px,oc.tol):'MARKET';
   hist({t:Date.now(),sym,sig,entry,sl,tp,conf:d.confidence,ot,mtf:(d.mtf&&d.mtf.sum)||'',out:sig==='NO_TRADE'?'none':'open'});
@@ -1429,13 +1444,8 @@ function show(d){
   const o=$('out');o.textContent='';o.hidden=false;
   o.appendChild(el('div','AI TRADE ANALYSIS','mut'));
   const rs=Array.isArray(d.reasons)&&d.reasons.length?String(typeof d.reasons[0]==='string'?d.reasons[0]:(d.reasons[0].text||d.reasons[0].why||'')):'';
-  o.appendChild(sigCard(sig,sym,(d.trigger&&d.trigger.tf)?String(d.trigger.tf).toUpperCase():'',d.confidence,sig==='NO_TRADE'?why:(rs||(d.trigger&&d.trigger.why)||''),(d.mtf&&d.mtf.sum)?['TREND',String(d.mtf.sum).slice(0,60)]:null,ot));
-  if(sig!=='NO_TRADE'){
-    const lv=el('div',null,'lv');
-    [['Entry'+(ot!=='MARKET'?' ('+ot+')':''),entry],['Stop loss',sl]].concat([Math.abs(tp-entry)/Math.abs(entry-sl)||1.5,2.5,4,6].map((m,i)=>['TP'+(i+1),+(entry+(sig==='BUY'?1:-1)*m*Math.abs(entry-sl)).toFixed(6)])).forEach(([n,v])=>{const x=el('div');x.append(el('span',n),el('strong',fmt(v)));lv.appendChild(x)});
-    const x=el('div');x.append(el('span','TP1 risk to reward'),el('strong','1 : '+(Math.abs(tp-entry)/Math.abs(entry-sl)).toFixed(2)));lv.appendChild(x);
-    o.appendChild(lv);if(ot!=='MARKET')o.appendChild(el('p',orderNote(ot,fmt(entry)),'mut'));o.appendChild(execBox(sig,sym,entry,sl,tp));
-  }
+  if(sig==='NO_TRADE')o.appendChild(sigCard(sig,sym,(d.trigger&&d.trigger.tf)?String(d.trigger.tf).toUpperCase():'',d.confidence,why,(d.mtf&&d.mtf.sum)?['TREND',String(d.mtf.sum).slice(0,60)]:null,ot));
+  else o.appendChild(sigPanel({dir:sig,sym,conf:d.confidence,entry,sl,ot,why:rs||(d.trigger&&d.trigger.why)||'',trend:(d.mtf&&d.mtf.sum)||''}));
 }
 const fmtn=v=>typeof v==='number'?String(+v.toFixed(6)):'n/a';
 function H(){try{return JSON.parse(ls('ifx_hist')||'[]')}catch(e){return []}}
@@ -2537,8 +2547,11 @@ async function mtSymbols(){
   }catch(e){if([401,403,429].includes(e.status)||/reach/i.test(e.message))throw e}
   return [];
 }
-async function mtCands(base){
+async function mtCands(sym){
+  const raw=String(sym||'').trim(),core=symKey(raw),full=raw.toUpperCase().replace(/[^A-Z0-9]/g,''),base=ALIAS[core]?core:full;
   const al=ALIAS[base]||[base],tries=[];
+  const ov=bsymGet(raw);if(ov)tries.push(ov);      /* the name typed with the pen always goes first */
+  if(raw&&raw.toUpperCase()!==base)tries.push(raw);  /* the symbol exactly as it was typed or shown */
   const list=await mtSymbols(),nrm=x=>String(x).toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(list.length){
     const found=[];
@@ -2550,24 +2563,26 @@ async function mtCands(base){
   return [...new Set(tries)].slice(0,40);
 }
 async function mtResolve(sym){
-  const base=String(sym||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-  if(!base)throw new Error('No symbol to trade.');
+  const key=String(sym||'').trim();
+  if(!key)throw new Error('No symbol to trade.');
+  const ov=bsymGet(key);if(ov)return ov;
   MT.map=MT.map||{};
-  if(MT.map[base])return MT.map[base];
+  if(MT.map[key])return MT.map[key];
   mtLastErr='';mtQMiss=0;
-  for(const t of await mtCands(base)){
-    if(await mtQuote(t)){MT.map[base]=t;return t}
+  for(const t of await mtCands(key)){
+    if(await mtQuote(t)){MT.map[key]=t;return t}
     if(mtQMiss>=2)break;   /* the price service itself is not answering, stop probing */
   }
   const e=new Error('Could not get a price for "'+sym+'" from '+(BROKER_LABELS[MT.br]||'your broker')+(mtLastErr?' ('+mtLastErr+')':'')+'.');e.soft=true;throw e;
 }
 /* never blocks the trade: if no live price can be read, the order still goes to the broker at its own market price */
 async function mtResolveSoft(sym){
-  const base=String(sym||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const ov=bsymGet(sym);
+  if(ov){let q=null;try{q=await mtQuote(ov)}catch(e){}return{name:ov,cands:[ov],q}}
   try{const n=await mtResolve(sym);return{name:n,cands:[n],q:await mtQuote(n)}}
   catch(e){if(!e.soft)throw e}
-  const c=await mtCands(base);
-  return{name:c[0]||base,cands:c.slice(0,8),q:null};
+  const c=await mtCands(sym);
+  return{name:c[0]||String(sym),cands:c.slice(0,8),q:null};
 }
 async function mtSymSpec(bsym){
   /* Broker limits. Field names vary, so read several spellings. Anything missing stays null (unverified). */
@@ -2598,7 +2613,7 @@ function execRun(dir,sym,entry,sl,tp){
   if(!MT.id){tab('mt');return}
   entry=+entry;sl=+sl;tp=+tp;
   const bad=mtCheck(dir,entry,sl,tp);if(bad){alert(bad);return}
-  mtOpenConfirm(dir,String(sym).toUpperCase(),entry,sl,tp,parseFloat(ls('ifx_lot'))||parseFloat($('mtlot').value)||0.01,parseInt(ls('ifx_cnt'),10)||1)}
+  mtOpenConfirm(dir,String(sym).trim(),entry,sl,tp,parseFloat(ls('ifx_lot'))||parseFloat($('mtlot').value)||0.01,parseInt(ls('ifx_cnt'),10)||1)}
 function execQty(){
   const w=el('div',null,'xq');
   const mk=(lab,val,step,min,max,mode,cl)=>{const d=el('div');const l=el('label',lab);const i=el('input',null,cl);i.type='number';i.step=step;i.min=min;if(max)i.max=max;i.inputMode=mode;i.value=val;
@@ -2626,10 +2641,10 @@ function execBox(sig,sym,entry,sl,tp){
   w.appendChild(el('h2','Execute this trade'));
   const g=el('div',null,'row');
   const da=el('div'),db=el('div');
-  const la=el('label','Lot size per trade');la.htmlFor='slot';
-  const li=el('input');li.id='slot';li.type='number';li.step='0.01';li.min='0.01';li.inputMode='decimal';li.value=ls('ifx_lot')||'0.01';
-  const lb=el('label','Number of trades (1 to '+MAXN+')');lb.htmlFor='scnt';
-  const ci=el('input');ci.id='scnt';ci.type='number';ci.step='1';ci.min='1';ci.max=String(MAXN);ci.inputMode='numeric';ci.value=ls('ifx_cnt')||'1';
+  const la=el('label','Lot size per trade');
+  const li=el('input');li.type='number';li.step='0.01';li.min='0.01';li.inputMode='decimal';li.value=ls('ifx_lot')||'0.01';
+  const lb=el('label','Number of trades (1 to '+MAXN+')');
+  const ci=el('input');ci.type='number';ci.step='1';ci.min='1';ci.max=String(MAXN);ci.inputMode='numeric';ci.value=ls('ifx_cnt')||'1';
   da.append(la,li);db.append(lb,ci);g.append(da,db);w.appendChild(g);
   const tot=el('p',null,'mut');tot.style.margin='6px 0 0';w.appendChild(tot);
   const upd=()=>{
@@ -2658,6 +2673,44 @@ function mtCheck(dir,entry,sl,tp){
   if(dir==='SELL'&&!(tp<entry&&entry<sl))return 'These levels do not fit a SELL (take profit must be below entry and stop loss above). Scan again.';
   return '';
 }
+
+/* ===== one signal card for every source: symbol with pen, recommendation, trade suggestion (TP = 1.5 x risk), execute box ===== */
+function tp15(dir,entry,sl){entry=+entry;sl=+sl;if(!(entry>0&&sl>0&&entry!==sl))return null;const k=dir==='BUY'?1:-1;return +(entry+k*1.5*Math.abs(entry-sl)).toFixed(6)}
+const symKey=x=>String(x||'').toUpperCase().replace(/[^A-Z0-9].*$/,'');
+function bsymMap(){try{return JSON.parse(ls('ifx_bsym')||'{}')||{}}catch(e){return{}}}
+function bsymGet(sym){return bsymMap()[symKey(sym)]||''}
+function bsymSet(sym,v){const m=bsymMap(),k=symKey(sym);v=String(v||'').trim().slice(0,30);if(v)m[k]=v;else delete m[k];ls('ifx_bsym',JSON.stringify(m));try{MT.map={}}catch(e){}}
+function symRow(sym){
+  const w=el('div',null,'spn-sym');
+  const draw=()=>{
+    w.textContent='';const cur=bsymGet(sym)||String(sym);
+    const n=el('span',cur,'spn-name'),pen=el('button','\u270E','spn-pen');pen.type='button';
+    pen.title='Type the symbol exactly as it appears on your broker';pen.setAttribute('aria-label','Edit the symbol name on your broker');
+    pen.onclick=ev=>{ev.stopPropagation();w.textContent='';
+      const i=el('input',null,'spn-in');i.type='text';i.value=cur;i.placeholder='Symbol on your broker, e.g. US30.s';i.autocomplete='off';i.autocapitalize='off';i.spellcheck=false;
+      const ok=el('button','Save','spn-ok');ok.type='button';
+      const done=()=>{bsymSet(sym,i.value);draw()};
+      ok.onclick=done;i.onkeydown=e=>{if(e.key==='Enter')done()};
+      w.append(i,ok);i.focus();i.select()};
+    w.append(n,pen)};
+  draw();return w}
+function sigPanel(o){
+  const dir=o.dir,sym=String(o.sym),entry=+o.entry,sl=+o.sl,tp=tp15(dir,entry,sl),ot=o.ot&&o.ot!=='MARKET'?o.ot:'';
+  const F=v=>{try{return fp(+v,sym)}catch(e){return fmtn(+v)}};
+  const w=el('div',null,'spn');
+  w.appendChild(symRow(sym));
+  w.appendChild(el('div','RECOMMENDATION','spn-lab'));
+  const r=el('div',null,'spn-rec');r.appendChild(el('b',ot||dir,dir));
+  const cf=Math.round(+o.conf);if(cf>0)r.appendChild(el('span',cf+'% confidence','spn-cf'));
+  w.appendChild(r);
+  if(o.why)w.appendChild(el('p',String(o.why),'spn-why'));
+  if(o.trend)w.appendChild(el('small','Trend: '+String(o.trend).slice(0,80),'spn-note'));
+  w.appendChild(el('div','TRADE SUGGESTION','spn-lab'));
+  [['Entry'+(ot?' ('+ot+')':''),F(entry)],['Stop Loss',F(sl)],['Take Profit',tp==null?'n/a':F(tp)]].forEach(([n,v])=>{const x=el('div',null,'spn-row');x.append(el('span',n),el('b',v));w.appendChild(x)});
+  w.appendChild(el('small','Take profit is 1.5 times the risk (1 : 1.5).','spn-note'));
+  if(ot)w.appendChild(el('p',orderNote(ot,F(entry)),'mut'));
+  if(tp!=null)w.appendChild(execBox(dir,sym,entry,sl,tp));
+  return w}
 function mtClosePanel(){const m=$('xm');if(m)m.remove()}
 async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
   mtClosePanel();
@@ -4261,15 +4314,15 @@ function bqShow(o,D,R,note){const sym=D.sym,sig=R.dir;
  o.appendChild(el('div','AI TRADE ANALYSIS','mut'));
  const w0=String((R.con&&R.con[0])||'No clear setup right now.'),why=(w0.match(/^.*?[.!?](?=\s|$)/)||[w0])[0];
  const oc=ordCtx(D),ot=sig!=='NO_TRADE'?orderKind(sig,R.entry,oc.px,oc.tol):'MARKET';
- o.appendChild(sigCard(sig,sym,'15M',R.conf,sig==='NO_TRADE'?why:[].concat(R.pro||[]).map(x=>String(x)).slice(0,2).join(' '),null,ot));
- const lv=el('div',null,'lv'),add=(n,v)=>{const x=el('div');x.append(el('span',n),el('strong',v));lv.appendChild(x)};
- add('Price',fp(brk(sym,D.q.px),sym));
- if(sig!=='NO_TRADE'){add('Entry'+(ot!=='MARKET'?' ('+ot+')':''),fp(brk(sym,R.entry),sym));add('Stop loss',fp(brk(sym,R.sl),sym));if(R.tps)R.tps.forEach((v,i)=>add('TP'+(i+1),fp(brk(sym,v),sym)));else add('TP1',fp(brk(sym,R.tp),sym))}
- o.appendChild(lv);
- if(ot!=='MARKET')o.appendChild(el('small',orderNote(ot,fp(brk(sym,R.entry),sym)),'mut'));
+ if(sig!=='NO_TRADE'){const t15=tp15(sig,R.entry,R.sl);if(t15){R.tp=t15;if(R.tps)R.tps[0]=t15}}
+ if(sig==='NO_TRADE'){
+  o.appendChild(sigCard(sig,sym,'15M',R.conf,why,null,ot));
+  const lv=el('div',null,'lv'),add=(n,v)=>{const x=el('div');x.append(el('span',n),el('strong',v));lv.appendChild(x)};
+  add('Price',fp(brk(sym,D.q.px),sym));o.appendChild(lv);
+ }else{
+  o.appendChild(sigPanel({dir:sig,sym,conf:R.conf,entry:R.entry,sl:R.sl,ot,why:[].concat(R.pro||[]).map(x=>String(x)).slice(0,2).join(' ')}));
+ }
  if(D.q&&D.q.ts)o.appendChild(el('small','Live price updated '+hm(D.q.ts)+' SAST.','mut'));
- {const why=[].concat(R.pro||[]).map(x=>String(x)).slice(0,2).join(' ');if(0&&why)o.appendChild(el('p',why,'mut'));
-  if(sig!=='NO_TRADE')o.appendChild(el('p',(ot==='MARKET'?'Enter at the current price.':'Place the '+ot+' at the entry price.')+' Take profits step by step, TP1 to TP4, and move the stop loss to entry once TP1 is hit.','mut'))}
  if(note)o.appendChild(el('small',note,'mut'))}
 function bqWait(o,D,lines){const s=el('div',null,'sig NO_TRADE');const k0=lines.join(' ');s.append(el('b',(/^NO SETUP/.test(lines[0]||'')?'NO SETUP ':'WAIT ')+D.sym),el('span',/^NO SETUP/.test(k0)?'No valid structure':'Potential setup, entry confirmation missing'));o.appendChild(s);const pb=el('div',null,'lv'),c=el('div');c.append(el('span','Current price (live quote)'),el('strong',fp(D.q.px,D.sym)));pb.appendChild(c);o.appendChild(pb);
  const u=el('ul',null,'warn');lines.forEach(x=>u.appendChild(el('li',x)));o.appendChild(u);bqData(o,D)}
@@ -4361,7 +4414,7 @@ ocShow=function(j,o){(async()=>{if(Date.now()>o.t+10*60e3)return;
   const it={sym,nm,dir:dir||'NO_TRADE',pr:call?+call.probability:ix?+ix.probability:null};
   if(!dir)it.why=call&&call.expired?'The levels were already hit before the open. Tap Predict for a fresh forecast.':call&&call.thin?call.why:'No clear direction.';
   else{if(call&&typeof call.sl==='number'){it.en=call.entry;it.sl=call.sl;it.tp=call.tp}else{const L=await quickLv(sym,dir).catch(()=>null);if(L){it.en=L.en;it.sl=L.sl;it.tp=L.tp}}
-   if(it.sl==null){it.dir='NO_TRADE';it.why='Live price data was not available.'}}
+   if(it.sl==null||!(+it.en>0)){it.dir='NO_TRADE';it.why='Live price data was not available.'}else{const t15=tp15(dir,it.en,it.sl);if(t15)it.tp=t15}}
   items.push(it)}
  ls('ifx_uocard',JSON.stringify({key:o.key,open:o.t,items}));
  items.forEach(it=>{if((it.dir==='BUY'||it.dir==='SELL')&&it.en!=null&&it.sl!=null&&it.tp!=null){const pk='ifx_uob_'+o.key+'_'+it.sym+it.dir;if(!ls(pk)){ls(pk,'1');try{banner(it.dir,it.sym,it.en,it.sl,it.tp,it.pr,{src:'US Open',tf:'US Open '+hm(o.t)+' SAST'})}catch(e){}}}});
@@ -4369,13 +4422,14 @@ ocShow=function(j,o){(async()=>{if(Date.now()>o.t+10*60e3)return;
 function drawOpen(){const box=$('uocard');let c=null;try{c=JSON.parse(ls('ifx_uocard')||'null')}catch(e){}
  const no=nextOpen&&nextOpen(),soon=no&&no.t-Date.now()<=60*60e3&&no.t-Date.now()>-10*60e3;
  if((!c||!c.items||c.open!==(no&&no.t)&&Date.now()<(c.open||0)+10*60e3===false)&&soon){box.hidden=false;box.className='ocard';box.textContent='';box.append(el('div','US OPEN PREDICTION','t'),el('small','Gathering futures, VIX, dollar, yields, news and live candles...'));return}
- if(!c||!c.items){box.hidden=true;return}
- if(Date.now()>c.open+10*60e3){box.hidden=true;if(!c.done){c.done=1;ls('ifx_uocard',JSON.stringify(c));c.items.forEach(x=>hist({t:c.open-6e4,sym:x.sym+' (US Open)',sig:x.dir,entry:x.en!=null?x.en:null,sl:x.sl,tp:x.tp,conf:x.pr,out:x.dir==='NO_TRADE'?'none':'open'}))}return}
+ if(!c||!c.items){box.hidden=true;box.__s=null;return}
+ if(Date.now()>c.open+10*60e3){box.hidden=true;box.__s=null;if(!c.done){c.done=1;ls('ifx_uocard',JSON.stringify(c));c.items.forEach(x=>hist({t:c.open-6e4,sym:x.sym+' (US Open)',sig:x.dir,entry:x.en!=null?x.en:null,sl:x.sl,tp:x.tp,conf:x.pr,out:x.dir==='NO_TRADE'?'none':'open'}))}return}
+ {const sg=JSON.stringify(c)+'|'+(MT.id?1:0);if(box.__s===sg&&!box.hidden&&box.firstChild)return;box.__s=sg}
  box.hidden=false;box.textContent='';box.className='ocard';
  box.append(el('div','US OPEN PREDICTION \ud83d\udd14','t'),el('div','AT '+hm(c.open-6e4)+' SAST','t'));
  c.items.forEach(x=>{const tr=x.dir==='BUY'||x.dir==='SELL';
-  box.append(el('div',(tr?'\u2705':'\u26a0\ufe0f')+(tr?x.dir:'NO TRADE')+' '+x.nm+(tr&&x.pr!=null?'  '+Math.round(x.pr)+'%':''),'s '+(tr?x.dir:'')));
-  if(tr){box.append(el('div',(x.en!=null?'\ud83d\udccdEntry: '+fp(brk(x.sym,x.en),x.sym)+'  ':'')+'\ud83d\udd34SL: '+fp(brk(x.sym,x.sl),x.sym)+'  \ud83d\udfe2TP: '+fp(brk(x.sym,x.tp),x.sym),'l'));if(x.en!=null&&x.sl!=null&&x.tp!=null)box.append(execBtn(x.dir,x.sym,x.en,x.sl,x.tp,'ecx'))}else box.append(el('small',x.why||'No clean setup. Stay out.'))});
+  if(tr&&x.en!=null&&x.sl!=null){box.append(sigPanel({dir:x.dir,sym:x.sym,conf:x.pr,entry:x.en,sl:x.sl,why:''}))}
+  else{box.append(el('div','\u26a0\ufe0fNO TRADE '+x.nm,'s'),el('small',x.why||'No clean setup. Stay out.'))}});
  box.append(el('small','USE PROPER RISK MANAGEMENT'))}
 setInterval(drawOpen,5000);
 setInterval(()=>{try{if(document.hidden||!unlocked()||ocBusy||Date.now()<(window.__aiQuotaUntil||0)||window.__aaRunning||document.getElementById('thumbs').classList.contains('scanning'))return;const o=nextOpen(),n=Date.now();if(o&&o.t-n<=60*60e3&&o.t-n>90e3){let l=null;try{l=JSON.parse(ls('ifx_olast')||'null')}catch(e){}if(!l||n-l.at>=(o.t-n<=15*60e3?60e3:5*60e3)){runOpen(false,true)}}}catch(e){}},60e3);try{const s=JSON.parse(ls('ifx_olast')||'null');if(s&&s.o)ocShow(s.j,s.o)}catch(e){}
@@ -4931,10 +4985,6 @@ bqStrategies=function(D){const c=[];
 /* verdict memory: written whenever Auto analyze finishes */
 {const _bsh=bqShow;bqShow=function(o,D,R,w){try{if(R&&D&&D.sym){const t=R.dir==='BUY'||R.dir==='SELL';VS.set(D.sym,{dir:t?R.dir:'NO_TRADE',entry:t?R.entry:null,sl:t?R.sl:null,tp:t?R.tp:null,conf:t?R.conf:0,setup:R.setup||'',why:t?'':String((R.con&&R.con[0])||'No confirmed setup').slice(0,200),px:D.q&&D.q.px,src:'auto'})}}catch(e){}return _bsh.apply(this,arguments)};
  const _bwt=bqWait;bqWait=function(o,D,rs){try{if(D&&D.sym)VS.set(D.sym,{dir:'NO_TRADE',conf:0,why:String((rs&&rs[0])||'Waiting').slice(0,200),src:'auto'})}catch(e){}return _bwt.apply(this,arguments)}}
-/* Auto analyze result: EXECUTE button */
-{const _bsh3=bqShow;bqShow=function(o,D,R,w){const r=_bsh3.apply(this,arguments);
- try{if(R&&D&&D.sym&&(R.dir==='BUY'||R.dir==='SELL')&&R.entry!=null&&R.sl!=null&&R.tp!=null&&o&&o.appendChild){const old=o.querySelector('.xexecw');if(old)old.remove();const w2=el('div',null,'xexecw');w2.style.marginTop='10px';w2.appendChild(execBtn(R.dir,D.sym,R.entry,R.sl,R.tp));o.appendChild(w2)}}catch(e){}
- return r}}
 /* Auto watch: the AI is only asked when the code engine sees something (saves the free AI allowance) */
 {const _bqAI2=bqAI;bqAI=async function(D){
  if(window.__wset&&window.__wset.has(D.sym)){window.__wset.delete(D.sym);
@@ -5062,5 +5112,10 @@ const _s=show;show=function(d){_s.apply(this,arguments);try{
  o.textContent='';o.append(c)}catch(e){}};
 home();
 })();
+
+/* every signal banner (Scanner, Auto analyze, Auto watch, US Open) uses TP = 1.5 x risk */
+{const _bTP=banner;banner=function(sig,sym,entry,sl,tp){
+  try{if((sig==='BUY'||sig==='SELL')&&+entry>0&&+sl>0){const t=tp15(sig,entry,sl);if(t){arguments[4]=t;tp=t}}}catch(e){}
+  return _bTP.apply(this,arguments)}}
 </script>
 </body></html>
