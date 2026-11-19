@@ -2584,6 +2584,11 @@ async function mtResolveSoft(sym){
   const c=await mtCands(sym);
   return{name:c[0]||String(sym),cands:c.slice(0,8),q:null};
 }
+async function mtTickets(){
+  try{const r=await mtf('/OpenedOrders');if(!Array.isArray(r.json))return null;
+    return r.json.map(x=>+(x.ticket!=null?x.ticket:x.Ticket!=null?x.Ticket:x.order!=null?x.order:0)).filter(t=>t>0)}
+  catch(e){return null}
+}
 async function mtSymSpec(bsym){
   /* Broker limits. Field names vary, so read several spellings. Anything missing stays null (unverified). */
   try{
@@ -2609,11 +2614,11 @@ function mtDrawLog(){
 }
 
 /* ---- one execute helper for every signal source: it opens the MT5 confirmation for that signal ---- */
-function execRun(dir,sym,entry,sl,tp){
+function execRun(dir,sym,entry,sl,tp,otHint){
   if(!MT.id){tab('mt');return}
   entry=+entry;sl=+sl;tp=+tp;
   const bad=mtCheck(dir,entry,sl,tp);if(bad){alert(bad);return}
-  mtOpenConfirm(dir,String(sym).trim(),entry,sl,tp,parseFloat(ls('ifx_lot'))||parseFloat($('mtlot').value)||0.01,parseInt(ls('ifx_cnt'),10)||1)}
+  mtOpenConfirm(dir,String(sym).trim(),entry,sl,tp,parseFloat(ls('ifx_lot'))||parseFloat($('mtlot').value)||0.01,parseInt(ls('ifx_cnt'),10)||1,otHint)}
 function execQty(){
   const w=el('div',null,'xq');
   const mk=(lab,val,step,min,max,mode,cl)=>{const d=el('div');const l=el('label',lab);const i=el('input',null,cl);i.type='number';i.step=step;i.min=min;if(max)i.max=max;i.inputMode=mode;i.value=val;
@@ -2635,7 +2640,7 @@ function execBtn(dir,sym,entry,sl,tp,cls,before){
   if(MT.id)wrap.append(q);wrap.append(b);
   return wrap}
 /* ---- scanner: execute button + confirmation ---- */
-function execBox(sig,sym,entry,sl,tp){
+function execBox(sig,sym,entry,sl,tp,otHint){
   const w=el('div',null,'xbox');
   const bad=mtCheck(sig,entry,sl,tp);
   w.appendChild(el('h2','Execute this trade'));
@@ -2661,7 +2666,7 @@ function execBox(sig,sym,entry,sl,tp){
     if(!(l>=0.01)){alert('Enter a lot size of at least 0.01.');li.focus();return}
     if(!(n>=1&&n<=MAXN)){alert('Number of trades must be a whole number from 1 to '+MAXN+'.');ci.focus();return}
     ls('ifx_lot',String(l));ls('ifx_cnt',String(n));$('mtlot').value=String(l);
-    mtOpenConfirm(sig,sym,entry,sl,tp,l,n);
+    mtOpenConfirm(sig,sym,entry,sl,tp,l,n,otHint);
   };
   w.appendChild(bt);
   if(bad&&MT.id)w.appendChild(el('p',bad,'warn'));
@@ -2709,10 +2714,10 @@ function sigPanel(o){
   [['Entry'+(ot?' ('+ot+')':''),F(entry)],['Stop Loss',F(sl)],['Take Profit',tp==null?'n/a':F(tp)]].forEach(([n,v])=>{const x=el('div',null,'spn-row');x.append(el('span',n),el('b',v));w.appendChild(x)});
   w.appendChild(el('small','Take profit is 1.5 times the risk (1 : 1.5).','spn-note'));
   if(ot)w.appendChild(el('p',orderNote(ot,F(entry)),'mut'));
-  if(tp!=null)w.appendChild(execBox(dir,sym,entry,sl,tp));
+  if(tp!=null)w.appendChild(execBox(dir,sym,entry,sl,tp,ot||'MARKET'));
   return w}
 function mtClosePanel(){const m=$('xm');if(m)m.remove()}
-async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
+async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0,otHint){
   mtClosePanel();
   const demo=mtIsDemo();
   const ov=el('div');ov.id='xm';const bx=el('div',null,'xmb');ov.appendChild(bx);document.body.appendChild(ov);
@@ -2735,7 +2740,7 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
   const px=pre.q?(dir==='BUY'?pre.q.ask:pre.q.bid):entry;
   const risk=Math.abs(entry-sl),drift=Math.abs(px-entry);
   const past=pre.q?(dir==='BUY'?!(sl<px&&px<tp):!(tp<px&&px<sl)):false;
-  const ot=pre.q?orderKind(dir,entry,px,.2*risk):'MARKET',pend=ot!=='MARKET',OT=ot.replace(' ','_');
+  const ot=pre.q?orderKind(dir,entry,px,.2*risk):(/^(BUY|SELL) (LIMIT|STOP)$/.test(String(otHint||''))?otHint:'MARKET'),pend=ot!=='MARKET',OT=ot.replace(' ','_');
   const row=(n,v)=>{const r=el('div',null,'xmr');r.append(el('span',n),el('b',v));body.appendChild(r)};
   row('Account',(BROKER_LABELS[MT.br]||'MT5')+' / '+(MT.login||MT.id.slice(0,8)+'...')+(MT.server?' / '+MT.server:''));
   row('Broker symbol',pre.bsym);
@@ -2811,9 +2816,10 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
     }
     go.disabled=true;no.disabled=true;lot.disabled=true;cnt.disabled=true;
     ls('ifx_maxrisk',String(maxR));ls('ifx_lot',String(lots));ls('ifx_cnt',String(n));$('mtlot').value=String(lots);
-    let sent=0,err='';const tickets=[];
+    let sent=0,err='',unconf=0;const tickets=[];
     try{
       if($('mtone').checked){await mtRefresh();if((MT.pos||[]).some(p=>p.symbol===pre.bsym))throw new Error('There is already an open '+pre.bsym+' position, so no new order was sent. Check Open trades before trying again.')}
+      const before=new Set((await mtTickets())||[]);
       for(let i=0;i<n;i++){
         go.textContent='Sending '+(i+1)+' of '+n+'...';
         let cur=px;
@@ -2841,8 +2847,21 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
         if(!r)throw new Error(lastErr||'The broker did not accept this symbol name.');
         const j=typeof r.json==='object'&&r.json?r.json:{};
         if(!mtOk(j))throw new Error((j.comment||j.message||'Broker did not accept the order')+(j.retcode!==undefined?' [retcode '+j.retcode+']':''));
-        sent++;if(j.ticket)tickets.push(j.ticket);
-        mtLogAdd({t:Date.now(),side:dir,sym:pre.bsym,lots,sl,tp,type:(pend?ot:'MARKET')+' '+(i+1)+'/'+n,ok:true,msg:j.ticket?'ticket '+j.ticket:''});
+        let tk=+(j.ticket!=null?j.ticket:j.Ticket!=null?j.Ticket:j.order!=null?j.order:j.orderTicket!=null?j.orderTicket:j.deal!=null?j.deal:0);
+        if(!(tk>0)){
+          /* no ticket came back: look at the account to see whether the order really exists */
+          await mtSleep(900);
+          const now=await mtTickets();
+          if(now===null)unconf++;
+          else{
+            const fresh=now.filter(t=>!before.has(t));
+            if(!fresh.length)throw new Error('The broker did not confirm this order: no ticket came back and nothing new appeared in Open trades. Broker reply: '+(typeof r.json==='string'?r.json:JSON.stringify(r.json)).slice(0,160));
+            tk=fresh[0];
+          }
+        }
+        if(tk>0){before.add(tk);tickets.push(tk)}
+        sent++;
+        mtLogAdd({t:Date.now(),side:dir,sym:pre.bsym,lots,sl,tp,type:(pend?ot:'MARKET')+' '+(i+1)+'/'+n,ok:true,msg:tk>0?'ticket '+tk:'not confirmed'});
         if(i<n-1)await mtSleep(500);
       }
     }catch(e){err=e.message;mtLogAdd({t:Date.now(),side:dir,sym:pre.bsym,lots,sl,tp,type:(pend?ot:'MARKET')+' '+(sent+1)+'/'+n,ok:false,msg:e.message})}
@@ -2852,7 +2871,7 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0){
       return;
     }
     body.textContent='';
-    const res=el('div',(err?'Partly sent. ':'Sent. ')+sent+' of '+n+' '+(pend?ot:dir)+' '+pre.bsym+(pend?' pending orders (':' trades (')+lots+' lots each, '+(+(lots*sent).toFixed(2))+' lots total) were accepted by your broker'+(tickets.length?' (tickets '+tickets.join(', ')+')':'')+'.'+(err?' Order '+(sent+1)+' was rejected or not sent: '+err+(n-sent-1>0?' Orders '+(sent+2)+' to '+n+' were not attempted.':'')+' Check Open trades before sending more.':''),'xmw');
+    const res=el('div',(err?'Partly sent. ':'Sent. ')+sent+' of '+n+' '+(pend?ot:dir)+' '+pre.bsym+(pend?' pending orders (':' trades (')+lots+' lots each, '+(+(lots*sent).toFixed(2))+' lots total) were accepted by your broker'+(tickets.length?' (tickets '+tickets.join(', ')+')':'')+'.'+(unconf?' Some orders could not be checked on the account, so open the MetaTrader tab and confirm them in Open trades.':'')+(err?' Order '+(sent+1)+' was rejected or not sent: '+err+(n-sent-1>0?' Orders '+(sent+2)+' to '+n+' were not attempted.':'')+' Check Open trades before sending more.':''),'xmw');
     res.style.cssText=err?'':'border-color:var(--buy);color:var(--buy)';
     body.appendChild(res);
     const c2=el('button','Done','pri xbtn');c2.type='button';c2.onclick=mtClosePanel;body.appendChild(c2);
@@ -4942,7 +4961,7 @@ function arbit(d,sym,Dscan){
 {const _pb2=paintBn;paintBn=function(s){_pb2.apply(this,arguments);
  try{const b=document.querySelector('#sg .sgex');if(!b)return;const ok=!!s&&!s.dismissed&&!s.done&&(s.sig==='BUY'||s.sig==='SELL')&&s.enN>0&&s.slN>0&&s.tpN>0;b.hidden=!ok;
   const qb=document.querySelector('#sg .sgq');if(qb){if(!ok||!MT.id){qb.hidden=true}else{if(!qb.firstChild){const q=execQty();qb.appendChild(q);qb._q=q}else{qb._q.lot.value=ls('ifx_lot')||'0.01';qb._q.cnt.value=ls('ifx_cnt')||'1'}qb.hidden=false}}
-  if(ok){b.textContent=MT.id?'EXECUTE '+(s.ot&&s.ot!=='MARKET'?s.ot:s.sig)+' ON MT5':'CONNECT MT5 TO EXECUTE';b.onclick=ev=>{ev.stopPropagation();if(MT.id&&qb&&qb._q&&!execQtyRead(qb._q))return;execRun(s.sig,s.sym,s.enN,s.slN,s.tpN)}}}catch(e){}}}
+  if(ok){b.textContent=MT.id?'EXECUTE '+(s.ot&&s.ot!=='MARKET'?s.ot:s.sig)+' ON MT5':'CONNECT MT5 TO EXECUTE';b.onclick=ev=>{ev.stopPropagation();if(MT.id&&qb&&qb._q&&!execQtyRead(qb._q))return;execRun(s.sig,s.sym,s.enN,s.slN,s.tpN,s.ot)}}}catch(e){}}}
 {const _og=openGate;openGate=function(j,ds,F,sr){const r=_og.apply(this,arguments);try{openThin(j)}catch(e){}return r}}
 window.__addMacro=addMacro;window.bqResolve=bqResolve;window.bqQuote=bqQuote;
 codePat=function(D,d){const good=[],bad=[];
