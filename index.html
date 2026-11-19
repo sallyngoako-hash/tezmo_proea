@@ -385,6 +385,8 @@ body.hasbn #micout{top:calc(138px + env(safe-area-inset-top,0px))}
 #sg.done b{color:#9aa6c0}
 #sg.mini:not(.open){padding-top:6px;padding-bottom:6px}
 #sg.mini:not(.open) span,#sg.mini:not(.open) .sgm{display:none}
+#sg .sgex{display:block;margin-top:8px;padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;font:800 12px system-ui,sans-serif;letter-spacing:.6px;cursor:pointer}#sg .sgex[hidden],#sg.mini:not(.open) .sgex{display:none}
+.xexecw .xexec{width:100%}.ocard .ecx{margin-top:8px;padding:8px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font:800 12px system-ui,sans-serif;letter-spacing:.5px;cursor:pointer}
 @media (prefers-reduced-motion:reduce){#sg.fresh{animation:none}}
 /* ---- timeframe agreement + higher timeframe map ---- */
 .mtfp{margin:14px 0}
@@ -589,7 +591,7 @@ html,body{overscroll-behavior:none}
 <button id="mb" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mp"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
 <div id="mp" hidden><h2>Signal history</h2><div id="sgh"></div><div class="sws" id="tm" hidden></div></div>
 <div id="bn" role="status"><i></i><div><b>TEZMO PRO EA</b><span id="bs"></span></div></div>
-<div id="sg" role="status" aria-live="polite"><i></i><div><b></b><span></span><em class="sgm"></em></div><button type="button" class="sgx" aria-label="Dismiss this signal" title="Dismiss">×</button></div>
+<div id="sg" role="status" aria-live="polite"><i></i><div><b></b><span></span><em class="sgm"></em><button type="button" class="sgex" hidden></button></div><button type="button" class="sgx" aria-label="Dismiss this signal" title="Dismiss">×</button></div>
 <main>
 <div class="tab on" id="t-home">
 <button id="mic" type="button" aria-label="Talk to the AI"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><div id="micout" hidden role="status"></div><button id="ecb" type="button" aria-label="Economic calendar"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg><span>Economic<br>calendar</span></button>
@@ -621,7 +623,6 @@ html,body{overscroll-behavior:none}
 <div hidden><input id="ep"><input id="gk"><input id="grk"></div>
 <div id="keyst" hidden></div>
 <div id="pubbox" hidden></div>
-<div id="brkbox"></div>
 <div><label for="nk">API key</label><input id="nk" type="password" placeholder="Paste a new API key to replace the saved one" autocomplete="off" spellcheck="false"><button id="nks" class="pri" type="button">Save key</button><small id="nkm"></small></div>
 <div hidden><label for="slm">Stops</label><select id="slm"><option value="atr">ATR, behind the zone</option><option value="fixed">Fixed EA points</option></select></div>
 <div hidden><label for="adxs">ADX/DI trend filter</label><select id="adxs"><option value="0">Off</option><option value="1">On</option></select></div>
@@ -680,7 +681,7 @@ html,body{overscroll-behavior:none}
 <div class="mtl">1. Broker</div><div id="mtbr" class="chipbox"></div>
 <div class="row" style="margin-top:12px">
 <div><label for="mtsrv">2. Server</label><select id="mtsrv"></select></div>
-<div id="mtcw" hidden><label for="mtcs">Server name (exactly as in your broker email)</label><input id="mtcs" placeholder="e.g. Exness-MT5Real9" autocomplete="off" spellcheck="false"></div>
+<div id="mtcw" hidden><label for="mtcs">Server name (exactly as in your broker email)</label><input id="mtcs" placeholder="e.g. JustMarkets-Live" autocomplete="off" spellcheck="false"></div>
 </div>
 <div class="row" style="margin-top:12px">
 <div><label for="mtlogin">3. MT5 login (account number)</label><input id="mtlogin" inputmode="numeric" placeholder="e.g. 12345678" autocomplete="off"></div>
@@ -701,11 +702,6 @@ html,body{overscroll-behavior:none}
 <div><label for="mtsfx">Symbol suffix (optional)</label><input id="mtsfx" placeholder="e.g. m, c, # or .pro" autocomplete="off" spellcheck="false"></div>
 </div>
 <label class="xmk" style="margin:10px 0 0"><input type="checkbox" id="mtone" checked> <span>Block a new trade if I already have an open position on the same symbol</span></label>
-<div class="row" style="margin-top:12px;align-items:end">
-<div><label for="mtqs">Quote check</label><input id="mtqs" placeholder="Symbol, e.g. XAUUSD" autocomplete="off"></div>
-<div><button id="mtqb" class="sec" type="button" style="width:100%">Get price</button></div>
-</div>
-<div id="mtq" class="mono"></div>
 <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap"><button id="mtrf" class="sec" type="button">Refresh</button><button id="mtdc" class="dng" type="button">Disconnect</button></div>
 </section>
 <section id="mtp" hidden><h2>Open trades</h2><div class="tbl"><table id="mtpos"></table></div><p id="mtpn" class="mut" style="margin:8px 0 0"></p></section>
@@ -746,8 +742,7 @@ function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localSt
 function orderKind(dir,entry,px,tol){const e=+entry,p=+px;if(!(e>0)||!(p>0)||(dir!=='BUY'&&dir!=='SELL'))return 'MARKET';const t=tol>0?tol:p*0.0003;if(Math.abs(e-p)<=t)return 'MARKET';if(dir==='BUY')return e<p?'BUY LIMIT':'BUY STOP';return e>p?'SELL LIMIT':'SELL STOP'}
 function orderNote(ot,en){const m={'BUY LIMIT':'A pending order waiting BELOW the price. It fills only if price falls to '+en+'.','BUY STOP':'A pending order waiting ABOVE the price (a breakout entry). It fills only if price rises to '+en+'.','SELL LIMIT':'A pending order waiting ABOVE the price. It fills only if price rises to '+en+'.','SELL STOP':'A pending order waiting BELOW the price (a breakdown entry). It fills only if price falls to '+en+'.'};return m[ot]?ot+' at '+en+'. '+m[ot]+' Cancel it if price reaches the target before the entry fills.':''}
 function ordCtx(D){try{const a=TZE.atr(D.tfs.M15.cs);return{px:D.q.px,tol:a>0?.15*a:0}}catch(e){return{px:null,tol:0}}}
-function brkOff(sym){try{const o=JSON.parse(ls('ifx_boff')||'{}')[sym];return o&&isFinite(o.off)?+o.off:0}catch(e){return 0}}
-function brk(sym,v){const n=+v;return(v==null||!isFinite(n))?v:n+brkOff(sym)}
+function brk(sym,v){const n=+v;return(v==null||!isFinite(n))?v:n}
 /* Your site address. Leave empty when the app is opened from your site (the normal case); only fill it to test a local copy. */
 const SITE_FALLBACK='';
 const OWNER_EMAIL='tumeloseleka74@gmail.com';/* owner: clients request access from him and receive his signals */
@@ -1568,14 +1563,14 @@ const BOT=(function(){
   try{await call('stop')}catch(e){}
   render()}
  async function toggle(){if(isOn())return stop();try{await start(false)}catch(e){toast(e.reason==='access'||e.status===401?'Your access is not active. Reopen the app.':'Could not start. Check your connection and try again.')}}
- function pubUI(){const box=$('pubbox');if(!box)return;box.hidden=ls(K.adm)!=='1';if(box.hidden||box.dataset.b)return;box.dataset.b='1';
-  box.append(el2('h3','','Publisher (owner only)'),el2('small','','Your own completed BUY and SELL signals are sent to every client who pressed START. Paste your admin key once. It stays on this phone only.'));
-  const k=document.createElement('input');k.type='password';k.placeholder='Admin key';k.autocomplete='off';k.value='';
+ function pubUI(){const box=$('pubbox');if(!box)return;box.hidden=!(ls(K.adm)==='1'||isOwnerMail());if(box.hidden||box.dataset.b)return;box.dataset.b='1';
+  box.append(el2('h3','','Admin token (owner only)'),el2('small','','Type your admin token once. Every BUY or SELL signal from this app (AI Scanner, Auto analyze, Auto watch, News, US Open) is then sent to all clients who pressed START. The token stays on this phone only.'));
+  const k=document.createElement('input');k.type='password';k.placeholder='Admin token';k.autocomplete='off';k.value='';
   const on=document.createElement('label');const cb=document.createElement('input');cb.type='checkbox';cb.checked=ls('ifx_pubon')!=='0';on.append(cb,document.createTextNode(' Publish my signals to all clients'));
-  const sv=el2('button','pri','Save key'),msg=el2('small','',ls('ifx_pubkey')?'Key saved on this phone.':'');sv.type='button';
+  const sv=el2('button','pri','Save token'),msg=el2('small','',ls('ifx_pubkey')?'Token saved on this phone.':'');sv.type='button';
   cb.onchange=()=>ls('ifx_pubon',cb.checked?'1':'0');
-  sv.onclick=async()=>{const v=k.value.trim();if(v.length<8){msg.textContent='Paste your admin key.';return}msg.textContent='Checking...';
-   try{const j=await call('whoami',{},{'x-admin':v});if(!j.admin){msg.textContent='That key is not accepted.';return}ls('ifx_pubkey',v);k.value='';const st=await call('stats',{},{'x-admin':v});msg.textContent='Verified. '+st.active+' client(s) active now.'}catch(e){msg.textContent='Could not verify. Try again.'}};
+  sv.onclick=async()=>{const v=k.value.trim();if(v.length<8){msg.textContent='Type your admin token.';return}msg.textContent='Checking...';
+   try{const j=await call('whoami',{},{'x-admin':v});if(!j.admin){msg.textContent='That admin token is not accepted.';return}ls('ifx_pubkey',v);k.value='';const st=await call('stats',{},{'x-admin':v});msg.textContent='Verified. '+st.active+' client(s) active now.'}catch(e){msg.textContent='Could not verify. Try again.'}};
   box.append(k,sv,on,msg)}
  function init(){
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&isOn())sync()});
@@ -2377,17 +2372,15 @@ renderUsdEng();
 const MAXN=20;
 const mtSleep=ms=>new Promise(r=>setTimeout(r,ms));
 const MT_URL='https://mt5.mtapi.io';
-const BROKER_LABELS={xm:'XM Global Markets',exness:'Exness',just:'JustMarkets'};
+const BROKER_LABELS={just:'JustMarkets'};
 const rng=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
 const BROKERS={
-  xm:{real:['XMGlobal-MT5',...rng(1,10).map(n=>'XMGlobal-MT5 '+n)],demo:['XMGlobal-Demo']},
-  exness:{real:['Exness-MT5Real',...[...rng(2,12),...rng(14,43),46,51].map(n=>'Exness-MT5Real'+n)],demo:['Exness-MT5Trial',...[...rng(2,12),...rng(14,17)].map(n=>'Exness-MT5Trial'+n)]},
   just:{real:['JustMarkets-Live','JustMarkets-Live2','JustMarkets-Live3'],demo:['JustMarkets-Demo','JustMarkets-Demo2','JustMarkets-Demo3']}
 };
 const ALIAS={XAUUSD:['XAUUSD','GOLD'],XAGUSD:['XAGUSD','SILVER'],US30:['US30','US30Cash','DJ30','WS30','DJI30','USA30'],NAS100:['NAS100','US100','US100Cash','USTEC','NDX100','USTECH100'],SPX500:['SPX500','US500','US500Cash','SP500'],GER40:['GER40','DE40','DAX40','GER30','DE30'],UK100:['UK100','FTSE100'],USOIL:['USOIL','WTI','XTIUSD','USOUSD']};
 const SUFS=['m','c','.pro','#','.a','.raw'];
 var MT={};try{MT=JSON.parse(ls('ifx_mt')||'{}')||{}}catch(e){MT={}}
-let mtSel={br:MT.br||'exness'};
+let mtSel={br:'just'};
 const mtSave=()=>ls('ifx_mt',JSON.stringify({id:MT.id||'',br:MT.br||'',login:MT.login||'',server:MT.server||''}));
 const mtIsDemo=()=>/demo|trial/i.test(String(MT.server||''));
 const mtNum=v=>typeof v==='number'&&isFinite(v);
@@ -2509,7 +2502,7 @@ async function mtClose(p){
 $('mtrf').onclick=mtRefresh;
 $('mtdc').onclick=()=>{
   if(!confirm('Disconnect from this device? Your open trades stay open at your broker, and nothing else changes at your broker.'))return;
-  const o=MT;try{mtf('/Disconnect').catch(()=>{})}catch(e){}MT={};ls('ifx_mt','');mtSel={br:o.br||'exness'};
+  const o=MT;try{mtf('/Disconnect').catch(()=>{})}catch(e){}MT={};ls('ifx_mt','');mtSel={br:'just'};
   $('mtkey').value=o.key||'';$('mtid').value=o.id||'';$('mtlogin').value=o.login||'';$('mtpw').value='';
   mtSt('');mtDrawPick();if(o.server)mtSetServer(o.server);mtDraw();
 };
@@ -2559,11 +2552,6 @@ async function mtPrice(bsym){
   if(!q)throw new Error('No live price for '+bsym+'. The market may be closed.');
   return q;
 }
-$('mtqb').onclick=async()=>{
-  const o=$('mtq');o.textContent='...';
-  try{const s=await mtResolve($('mtqs').value||symv()||'XAUUSD');const q=await mtPrice(s);o.textContent=s+'   bid '+fmtn(q.bid)+'   ask '+fmtn(q.ask)}
-  catch(e){o.textContent=e.message}
-};
 
 /* ---- execution log ---- */
 function mtLogGet(){try{return JSON.parse(ls('ifx_exec')||'[]')}catch(e){return []}}
@@ -2574,6 +2562,16 @@ function mtDrawLog(){
   l.forEach(x=>{const d=el('div',null,'xlog');d.append(el('b',x.side+' '+x.sym+' '+x.lots+' lots, '+(x.ok?'sent':'FAILED'),x.ok?'p':'f'),el('div',new Date(x.t).toLocaleString()+' | '+x.type+' | SL '+fmtn(x.sl)+' TP '+fmtn(x.tp)+(x.msg?' | '+x.msg:''),'mut'));b.appendChild(d)});
 }
 
+/* ---- one execute helper for every signal source: it opens the MT5 confirmation for that signal ---- */
+function execRun(dir,sym,entry,sl,tp){
+  if(!MT.id){tab('mt');return}
+  entry=+entry;sl=+sl;tp=+tp;
+  const bad=mtCheck(dir,entry,sl,tp);if(bad){alert(bad);return}
+  mtOpenConfirm(dir,String(sym).toUpperCase(),entry,sl,tp,parseFloat(ls('ifx_lot'))||parseFloat($('mtlot').value)||0.01,parseInt(ls('ifx_cnt'),10)||1)}
+function execBtn(dir,sym,entry,sl,tp,cls,before){
+  const b=el('button',MT.id?'EXECUTE ON MT5':'CONNECT MT5 TO EXECUTE',cls==null?'pri xbtn xexec':cls);b.type='button';
+  b.onclick=ev=>{if(ev&&ev.stopPropagation)ev.stopPropagation();try{if(before)before()}catch(e){}execRun(dir,sym,entry,sl,tp)};
+  return b}
 /* ---- scanner: execute button + confirmation ---- */
 function execBox(sig,sym,entry,sl,tp){
   const w=el('div',null,'xbox');
@@ -3573,19 +3571,23 @@ $('glg').src=HOMEIMG;
  if(m){m.value=['std','off'].includes(ls('ifx_mtfm'))?ls('ifx_mtfm'):'flex';m.onchange=()=>ls('ifx_mtfm',m.value)}
  if(t){t.value=ls('ifx_trigm')==='ea'?'ea':'flex';t.onchange=()=>ls('ifx_trigm',t.value)}}
 $('gemail').value=ls('ifx_acc_email')||'';
+{/* the owner email needs no approval and no API key; the key box disappears when it is typed */
+ const gk=$('gkey'),gl=document.querySelector('label[for=gkey]'),gb=$('gcont'),ge=$('gemail');
+ const syncOwner=()=>{const o=ge.value.trim().toLowerCase()===OWNER_EMAIL;gk.style.display=o?'none':'';if(gl)gl.style.display=o?'none':'';gb.textContent=o?'Open app':'Request access'};
+ ge.addEventListener('input',syncOwner);syncOwner()}
 if(window.__acc){gHide()}else{document.body.style.overflow='hidden'}
-if(window.__acc&&((!ls('ifx_gkey')&&!ls('ifx_grkey'))||ls('ifx_rekey')==='1'))gShow('Enter your API key to continue.');
+if(window.__acc&&ls('ifx_acc_email').trim().toLowerCase()!==OWNER_EMAIL&&((!ls('ifx_gkey')&&!ls('ifx_grkey'))||ls('ifx_rekey')==='1'))gShow('Enter your API key to continue.');
 if(ls('ifx_acc_email'))accCheck();
 setInterval(accCheck,10*60e3);document.addEventListener('visibilitychange',()=>{if(!document.hidden)accCheck()});
 if($('gcont'))$('gcont').onclick=async()=>{const em=$('gemail').value.trim().toLowerCase(),k=$('gkey').value.trim(),m=$('gmsg'),b=$('gcont');
  if(!/^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/.test(em)){m.textContent='Enter a valid email address.';return}
- if(k.length<20){m.textContent='Paste your API key.';return}
+ if(k.length<20&&em!==OWNER_EMAIL){m.textContent='Paste your API key.';return}
  if(!/^https?:/.test(location.protocol)&&!SITE_FALLBACK){m.textContent='Open the app from its web address to continue.';return}
  b.disabled=true;m.textContent='Checking...';
  const isGQ=/^gsk_/.test(k);
- if(!isGQ)try{const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key='+encodeURIComponent(k));if([400,401,403].includes(r.status)){m.textContent='AI key not accepted.';b.disabled=false;return}}
+ if(!isGQ&&k)try{const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key='+encodeURIComponent(k));if([400,401,403].includes(r.status)){m.textContent='AI key not accepted.';b.disabled=false;return}}
  catch(e){m.textContent='No internet connection. Connect and try again.';b.disabled=false;return}
- ls(isGQ?'ifx_grkey':'ifx_gkey',k);$(isGQ?'grk':'gk').value=k;ls('ifx_acc_email',em);ls('ifx_rekey','');
+ if(k){ls(isGQ?'ifx_grkey':'ifx_gkey',k);$(isGQ?'grk':'gk').value=k}ls('ifx_acc_email',em);ls('ifx_rekey','');
  try{const rj=await accCall('request',em);if(rj.status==='exists'){ls('ifx_acc_email','');m.textContent='This email exists. It has already been used. Use your own email, or contact the seller if this one is yours.'}else await accCheck(true)}
  catch(e){m.textContent=(e&&e.status===404?'The access function is not deployed on the site yet.':e&&e.status===500?'The seller\'s server is not set up yet.':'Could not reach the server. Try again.')+' ';const a=document.createElement('a');a.href='mailto:'+OWNER_EMAIL+'?subject='+encodeURIComponent('TEZMO PRO access request')+'&body='+encodeURIComponent('Please approve my email: '+em+'\nDevice: '+DEV);a.textContent='Email the owner instead';a.style.color='inherit';m.appendChild(a)}
  b.disabled=false;};
@@ -4204,7 +4206,6 @@ function bqShow(o,D,R,note){const sym=D.sym,sig=R.dir;
  if(sig!=='NO_TRADE'){add('Entry'+(ot!=='MARKET'?' ('+ot+')':''),fp(brk(sym,R.entry),sym));add('Stop loss',fp(brk(sym,R.sl),sym));if(R.tps)R.tps.forEach((v,i)=>add('TP'+(i+1),fp(brk(sym,v),sym)));else add('TP1',fp(brk(sym,R.tp),sym))}
  o.appendChild(lv);
  if(ot!=='MARKET')o.appendChild(el('small',orderNote(ot,fp(brk(sym,R.entry),sym)),'mut'));
- if(brkOff(sym))o.appendChild(el('small','Prices are adjusted to your broker ('+(brkOff(sym)>0?'+':'')+brkOff(sym).toFixed(dg(sym))+' compared with the live feed).','mut'));
  if(D.q&&D.q.ts)o.appendChild(el('small','Live price updated '+hm(D.q.ts)+' SAST.','mut'));
  {const why=[].concat(R.pro||[]).map(x=>String(x)).slice(0,2).join(' ');if(0&&why)o.appendChild(el('p',why,'mut'));
   if(sig!=='NO_TRADE')o.appendChild(el('p',(ot==='MARKET'?'Enter at the current price.':'Place the '+ot+' at the entry price.')+' Take profits step by step, TP1 to TP4, and move the stop loss to entry once TP1 is hit.','mut'))}
@@ -4301,7 +4302,9 @@ ocShow=function(j,o){(async()=>{if(Date.now()>o.t+10*60e3)return;
   else{if(call&&typeof call.sl==='number'){it.en=call.entry;it.sl=call.sl;it.tp=call.tp}else{const L=await quickLv(sym,dir).catch(()=>null);if(L){it.en=L.en;it.sl=L.sl;it.tp=L.tp}}
    if(it.sl==null){it.dir='NO_TRADE';it.why='Live price data was not available.'}}
   items.push(it)}
- ls('ifx_uocard',JSON.stringify({key:o.key,open:o.t,items}));drawOpen()})()};
+ ls('ifx_uocard',JSON.stringify({key:o.key,open:o.t,items}));
+ items.forEach(it=>{if((it.dir==='BUY'||it.dir==='SELL')&&it.en!=null&&it.sl!=null&&it.tp!=null){const pk='ifx_uob_'+o.key+'_'+it.sym+it.dir;if(!ls(pk)){ls(pk,'1');try{banner(it.dir,it.sym,it.en,it.sl,it.tp,it.pr,{src:'US Open',tf:'US Open '+hm(o.t)+' SAST'})}catch(e){}}}});
+ drawOpen()})()};
 function drawOpen(){const box=$('uocard');let c=null;try{c=JSON.parse(ls('ifx_uocard')||'null')}catch(e){}
  const no=nextOpen&&nextOpen(),soon=no&&no.t-Date.now()<=60*60e3&&no.t-Date.now()>-10*60e3;
  if((!c||!c.items||c.open!==(no&&no.t)&&Date.now()<(c.open||0)+10*60e3===false)&&soon){box.hidden=false;box.className='ocard';box.textContent='';box.append(el('div','US OPEN PREDICTION','t'),el('small','Gathering futures, VIX, dollar, yields, news and live candles...'));return}
@@ -4311,7 +4314,7 @@ function drawOpen(){const box=$('uocard');let c=null;try{c=JSON.parse(ls('ifx_uo
  box.append(el('div','US OPEN PREDICTION \ud83d\udd14','t'),el('div','AT '+hm(c.open-6e4)+' SAST','t'));
  c.items.forEach(x=>{const tr=x.dir==='BUY'||x.dir==='SELL';
   box.append(el('div',(tr?'\u2705':'\u26a0\ufe0f')+(tr?x.dir:'NO TRADE')+' '+x.nm+(tr&&x.pr!=null?'  '+Math.round(x.pr)+'%':''),'s '+(tr?x.dir:'')));
-  if(tr)box.append(el('div',(x.en!=null?'\ud83d\udccdEntry: '+fp(brk(x.sym,x.en),x.sym)+'  ':'')+'\ud83d\udd34SL: '+fp(brk(x.sym,x.sl),x.sym)+'  \ud83d\udfe2TP: '+fp(brk(x.sym,x.tp),x.sym),'l'));else box.append(el('small',x.why||'No clean setup. Stay out.'))});
+  if(tr){box.append(el('div',(x.en!=null?'\ud83d\udccdEntry: '+fp(brk(x.sym,x.en),x.sym)+'  ':'')+'\ud83d\udd34SL: '+fp(brk(x.sym,x.sl),x.sym)+'  \ud83d\udfe2TP: '+fp(brk(x.sym,x.tp),x.sym),'l'));if(x.en!=null&&x.sl!=null&&x.tp!=null)box.append(execBtn(x.dir,x.sym,x.en,x.sl,x.tp,'ecx'))}else box.append(el('small',x.why||'No clean setup. Stay out.'))});
  box.append(el('small','USE PROPER RISK MANAGEMENT'))}
 setInterval(drawOpen,5000);
 setInterval(()=>{try{if(document.hidden||!unlocked()||ocBusy||Date.now()<(window.__aiQuotaUntil||0)||window.__aaRunning||document.getElementById('thumbs').classList.contains('scanning'))return;const o=nextOpen(),n=Date.now();if(o&&o.t-n<=60*60e3&&o.t-n>90e3){let l=null;try{l=JSON.parse(ls('ifx_olast')||'null')}catch(e){}if(!l||n-l.at>=(o.t-n<=15*60e3?60e3:5*60e3)){runOpen(false,true)}}}catch(e){}},60e3);try{const s=JSON.parse(ls('ifx_olast')||'null');if(s&&s.o)ocShow(s.j,s.o)}catch(e){}
@@ -4335,6 +4338,7 @@ async function evTick(){const box=$('evcard'),N=window.NEWSX;if(!N||!N.valid||ev
   c={t:z.t,tag,dir,pr:cf,lv:Date.now(),act:hasAct?1:0,why};
   if(dir!=='NO_TRADE'&&hasAct&&window.macroSnap){try{const m=await window.macroSnap(),g=m.GOLD&&m.GOLD.pct,d=m.DXY&&m.DXY.pct;const gu=g!=null&&Math.abs(g)>=.25&&(g>0?'BUY':'SELL')!==dir,du=d!=null&&Math.abs(d)>=.15&&(d>0?'SELL':'BUY')!==dir;if(gu&&du){c.dir=dir='NO_TRADE';c.why='Fundamental/price divergence: gold and the dollar are both moving against this call. Avoid immediate entry.'}}catch(e){}}
   if(dir!=='NO_TRADE'){await refresh(c,'XAUUSD');if(c.sl==null){c.dir='NO_TRADE';c.why='Live gold price data was not available.'}}
+  if(c.dir!=='NO_TRADE'&&c.en!=null&&c.sl!=null&&c.tp!=null){const pk='ifx_evpub_'+z.t+c.dir;if(!ls(pk)){ls(pk,'1');try{banner(c.dir,'XAUUSD',c.en,c.sl,c.tp,c.pr,{src:'News prediction',tf:tag})}catch(e){}}}
   ls(id,JSON.stringify(c))}catch(e){}evBusy=false}
  if(c){evPrev=Object.assign(evPrev&&evPrev.t===c.t?evPrev:{},c);cardHtml(box,tag,hm(z.t-6e4),c,'XAUUSD')}}
 /* ---- Home: Economic calendar pop-up. Shows ONLY the next high-impact USD event; the AI gathers what feeds it and gives the gold direction ---- */
@@ -4362,6 +4366,7 @@ function drawResult(rr,e){
  if(i&&i.found)card.append(el('div','\ud83d\udcca Actual '+i.actual+' \u00b7 Forecast '+(i.forecast||'n/a')+' \u00b7 Previous '+(i.previous||'n/a'),'nr'),el('div',(i.surprise==='ABOVE'?'Above the forecast':i.surprise==='BELOW'?'Below the forecast':i.surprise==='INLINE'?'In line with the forecast':'Surprise unclear')+' \u2192 dollar '+(i.usd==='STRONG'?'STRONG':i.usd==='WEAK'?'WEAK':'NEUTRAL')+(i.why?'. '+i.why:''),'nw'));
  if(sg)card.append(el('div','\ud83d\udccdEntry '+F(res.entry)+'   \ud83d\uded1SL '+F(res.sl)+'   \ud83d\udfe2TP '+F(res.tp),'nr'));
  card.append(el('div',res.note||'Looking for the published number...','nw'));if(sg)card.append(el('div',"Let's catch the move! \ud83d\udcb0\ud83d\udd25",'ng'));
+ if(sg&&res.entry!=null&&res.sl!=null&&res.tp!=null){const xr=el('div',null,'ecr');xr.append(el('p','','ecs'),execBtn(res.dir,'XAUUSD',res.entry,res.sl,res.tp,'',closeM));card.append(xr)}
  BX.append(card);
  if(e)BX.append(el('small','Next event today: '+tagOf(e.title)+' at '+sastT(Date.parse(e.date))+' SAST','ecs'));
  BX.append(el('small','AI forecasts are estimates, not certainties. Not financial advice.','ecs'));
@@ -4810,25 +4815,6 @@ function arbit(d,sym,Dscan){
  return d}
 
 /* ---- hooks: Auto analyze, Auto watch and the Scanner all read the same engine ---- */
-/* ---- Match my broker: finds which broker the live feed is closest to and adjusts every signal to it ---- */
-(function brkUI(){const box=$('brkbox');if(!box)return;
- box.append(el('h3','Match my broker prices'),el('small','Signals use a live price feed and every broker shows slightly different prices. Choose a symbol, type the price you see right now on up to 3 brokers, then tap Compare. The closest one is your best match. Tap Use this broker and every entry, stop loss and target is adjusted to that broker.'));
- const sel=document.createElement('select');SYMA.forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=x;sel.appendChild(o)});box.appendChild(sel);
- const rows=[0,1,2].map(i=>{const w=el('div'),n=document.createElement('input'),p=document.createElement('input');n.placeholder='Broker '+(i+1)+' name';n.autocomplete='off';p.placeholder='Price now';p.inputMode='decimal';p.autocomplete='off';w.append(n,p);box.appendChild(w);return{n,p}});
- const go=el('button','Compare'),out=el('div'),cur=el('small');go.type='button';go.className='pri';box.append(go,out,cur);
- const paint=()=>{let o={};try{o=JSON.parse(ls('ifx_boff')||'{}')}catch(e){}const k=Object.keys(o);cur.textContent=k.length?'Matched: '+k.map(x=>x+' '+(o[x].off>0?'+':'')+o[x].off.toFixed(dg(x))+(o[x].broker?' ('+o[x].broker+')':'')).join(', '):'No broker matched yet. Signals show the live feed prices.'};paint();
- go.onclick=async()=>{out.textContent='Reading the live price...';
-  try{const sym=sel.value,r=await window.bqResolve(sym),q=await window.bqQuote(r.name),feed=q.px,
-    list=rows.map(x=>({n:(x.n.value||'Broker').trim().slice(0,30),p:parseFloat(String(x.p.value).replace(',','.'))})).filter(x=>x.p>0);
-   if(!list.length){out.textContent='Type at least one broker price first.';return}
-   list.forEach(x=>{x.d=x.p-feed});const best=list.slice().sort((a,b)=>Math.abs(a.d)-Math.abs(b.d))[0];out.textContent='';
-   out.append(el('small','Live feed price now: '+fp(feed,sym)+(q.src&&q.src!=='the price feed'?'  (feed source: '+q.src+')':'')));
-   list.forEach(x=>{const row=el('div');row.append(el('b',x.n+(x===best&&list.length>1?'  \u2705 closest':'')),el('span','  '+x.p+'  ('+(x.d>0?'+':'')+x.d.toFixed(dg(sym))+' compared with the feed)'));
-    const b=el('button','Use this broker');b.type='button';
-    b.onclick=()=>{let o={};try{o=JSON.parse(ls('ifx_boff')||'{}')}catch(e){}o[sym]={off:+x.d.toFixed(6),t:Date.now(),broker:x.n};ls('ifx_boff',JSON.stringify(o));paint();out.append(el('small','Saved. Signals for '+sym+' now match '+x.n+'.'))};
-    row.append(b);out.append(row)});
-  }catch(e){out.textContent='Could not read the live price right now. Try again in a moment.'}};
- const clr=el('button','Remove all adjustments');clr.type='button';clr.onclick=()=>{ls('ifx_boff','{}');paint();out.textContent=''};box.appendChild(clr)})();
 {const _bn=banner;banner=function(sig,sym,entry,sl,tp,conf,x){const r=_bn.apply(this,arguments);
  try{x=x||{};if(!x.shared&&(sig==='BUY'||sig==='SELL')&&ls('ifx_isadmin')==='1'&&ls('ifx_pubon')!=='0'&&ls('ifx_pubkey')&&+entry>0&&+sl>0&&+tp>0){
   const cs=(()=>{try{return JSON.parse(ls('ifx_banner')||'null')}catch(e){return null}})(),ot=cs&&cs.sym===sym&&cs.sig===sig?cs.ot:'MARKET';
@@ -4838,6 +4824,9 @@ function arbit(d,sym,Dscan){
 {const _pb=paintBn;paintBn=function(s){_pb.apply(this,arguments);
  try{if(s&&s.sid&&!s.shared&&ls('ifx_pubkey')){const st=s.done==='TP'?'TP':s.done==='SL'?'SL':s.done==='CANCEL'?'CANCELLED':s.done?'EXPIRED':(s.filled?'FILLED':'');
   if(st&&s.sidst!==st){s.sidst=st;ls('ifx_banner',JSON.stringify(s));BOT.call('status',{id:s.sid,status:st},{'x-admin':ls('ifx_pubkey')}).catch(()=>{})}}}catch(e){}}}
+{const _pb2=paintBn;paintBn=function(s){_pb2.apply(this,arguments);
+ try{const b=document.querySelector('#sg .sgex');if(!b)return;const ok=!!s&&!s.dismissed&&!s.done&&(s.sig==='BUY'||s.sig==='SELL')&&s.enN>0&&s.slN>0&&s.tpN>0;b.hidden=!ok;
+  if(ok){b.textContent=MT.id?'EXECUTE '+(s.ot&&s.ot!=='MARKET'?s.ot:s.sig)+' ON MT5':'CONNECT MT5 TO EXECUTE';b.onclick=ev=>{ev.stopPropagation();execRun(s.sig,s.sym,s.enN,s.slN,s.tpN)}}}catch(e){}}}
 {const _og=openGate;openGate=function(j,ds,F,sr){const r=_og.apply(this,arguments);try{openThin(j)}catch(e){}return r}}
 window.__addMacro=addMacro;window.bqResolve=bqResolve;window.bqQuote=bqQuote;
 codePat=function(D,d){const good=[],bad=[];
@@ -4880,6 +4869,10 @@ bqStrategies=function(D){const c=[];
 /* verdict memory: written whenever Auto analyze finishes */
 {const _bsh=bqShow;bqShow=function(o,D,R,w){try{if(R&&D&&D.sym){const t=R.dir==='BUY'||R.dir==='SELL';VS.set(D.sym,{dir:t?R.dir:'NO_TRADE',entry:t?R.entry:null,sl:t?R.sl:null,tp:t?R.tp:null,conf:t?R.conf:0,setup:R.setup||'',why:t?'':String((R.con&&R.con[0])||'No confirmed setup').slice(0,200),px:D.q&&D.q.px,src:'auto'})}}catch(e){}return _bsh.apply(this,arguments)};
  const _bwt=bqWait;bqWait=function(o,D,rs){try{if(D&&D.sym)VS.set(D.sym,{dir:'NO_TRADE',conf:0,why:String((rs&&rs[0])||'Waiting').slice(0,200),src:'auto'})}catch(e){}return _bwt.apply(this,arguments)}}
+/* Auto analyze result: EXECUTE button */
+{const _bsh3=bqShow;bqShow=function(o,D,R,w){const r=_bsh3.apply(this,arguments);
+ try{if(R&&D&&D.sym&&(R.dir==='BUY'||R.dir==='SELL')&&R.entry!=null&&R.sl!=null&&R.tp!=null&&o&&o.appendChild){const old=o.querySelector('.xexecw');if(old)old.remove();const w2=el('div',null,'xexecw');w2.style.marginTop='10px';w2.appendChild(execBtn(R.dir,D.sym,R.entry,R.sl,R.tp));o.appendChild(w2)}}catch(e){}
+ return r}}
 /* Auto watch: the AI is only asked when the code engine sees something (saves the free AI allowance) */
 {const _bqAI2=bqAI;bqAI=async function(D){
  if(window.__wset&&window.__wset.has(D.sym)){window.__wset.delete(D.sym);
