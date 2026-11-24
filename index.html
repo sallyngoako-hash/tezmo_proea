@@ -660,7 +660,7 @@ html,body{overscroll-behavior:none}
 <section id="chk" hidden></section>
 <section id="out" hidden></section>
 <small>Check every level on your chart before trading. Not financial advice.</small>
-<section id="trk"></section></div>
+</div>
 <div id="nhid" hidden>
 <section id="evcard" hidden></section>
 <h1>Economic Calendar</h1>
@@ -919,27 +919,32 @@ drop.ondragleave=()=>drop.classList.remove('over');
 drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');add(e.dataTransfer.files)};
 document.onpaste=e=>add([...e.clipboardData.items].filter(i=>i.type.startsWith('image/')).map(i=>i.getAsFile()));
 
+const TF_RANK={M5:0,M15:1,H1:2,H4:3,D1:4,W1:5,DXY:8,Other:9};
+function sortShots(){shots.sort((a,b)=>(TF_RANK[a.tf]!=null?TF_RANK[a.tf]:9)-(TF_RANK[b.tf]!=null?TF_RANK[b.tf]:9))}
 function add(files){
   const list=[...files].filter(f=>f&&f.type&&f.type.startsWith('image/'));
   if(!list.length){st('No image found. Copy a screenshot or choose an image file.',1);return}
-  list.forEach(f=>{
+  /* read every file first, keep the order they were picked, then label them highest first (D1, H4, H1, M15) and sort */
+  Promise.all(list.map(f=>new Promise(res=>{
     const fr=new FileReader();
-    fr.onerror=()=>st('Could not read that file.',1);
+    fr.onerror=()=>{st('Could not read that file.',1);res(null)};
     fr.onload=()=>{
       const img=new Image();
-      img.onerror=()=>st('That image could not be opened. Try saving it as PNG or JPG.',1);
+      img.onerror=()=>{st('That image could not be opened. Try saving it as PNG or JPG.',1);res(null)};
       img.onload=()=>{
-        const m=1400,s=Math.min(1,m/Math.max(img.width,img.height));
-        const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+        const m=1200,k=Math.min(1,m/Math.max(img.width,img.height));
+        const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
         c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-        const full=c.toDataURL('image/jpeg',.78);
-        const used=shots.map(x=>x.tf);
-        shots.push({tf:TFS.find(t=>!used.includes(t))||'Other',b64:full.split(',')[1],url:full});
-        st('');draw();
+        const full=c.toDataURL('image/jpeg',.74);
+        res({b64:full.split(',')[1],url:full});
       };
       img.src=fr.result;
     };
     fr.readAsDataURL(f);
+  }))).then(arr=>{
+    const HI=['D1','H4','H1','M15','M5'];
+    arr.filter(Boolean).forEach(x=>{const used=shots.map(t=>t.tf);x.tf=HI.find(t=>!used.includes(t))||'Other';shots.push(x)});
+    sortShots();st('');draw();
   });
   $('file').value='';
 }
@@ -950,7 +955,7 @@ function draw(){
     const im=document.createElement('img');im.src=s.url;im.alt='Screenshot '+(i+1);
     const sel=document.createElement('select');
     [...TFS,'DXY','Other'].forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;if(t===s.tf)o.selected=true;sel.appendChild(o)});
-    sel.onchange=()=>{s.tf=sel.value};
+    sel.onchange=()=>{s.tf=sel.value;sortShots();draw()};
     const b=document.createElement('button');b.textContent='Remove';b.onclick=()=>{shots.splice(i,1);draw()};
     const w=el('div',null,'wrap');w.append(im,el('div',null,'line'));
     d.append(w,sel,b);box.appendChild(d);
@@ -964,6 +969,20 @@ const ORDER_PRIMER=`ORDER TYPES (name the entry correctly): the entry you give i
 - SELL LIMIT: a pending sell placed ABOVE the live price. It fills only if price RISES to the entry. Use it to sell a rally into a level likely to hold: resistance, supply zone or order block, a retest of broken support.
 - SELL STOP: a pending sell placed BELOW the live price. It fills only if price FALLS to the entry. Use it to sell a breakdown: just below support, below the neckline of a head and shoulders, below a range low.
 RULES: the stop loss and take profit are measured from the ENTRY, not from the live price. For a BUY the stop is below the entry and the target above; for a SELL the opposite. A pending entry must be a real level and stay within about 1.3 ATR(M15) of the live price. The app cancels the idea if price reaches the target before the entry is filled, so never place an entry on the far side of the target. If price is at the level right now, give a MARKET entry. Never give an entry on the wrong side for its type (a BUY LIMIT above the live price is really a BUY STOP). When the best entry is far away, answer WAIT instead of a distant pending order.
+`;
+const ORDER_RULES=`ORDER TYPE DECISION (mandatory, do it for every BUY or SELL before you answer): 1) Read the live price. 2) Choose the entry from the chart level. 3) If the entry is within a few points of the live price, it is a MARKET order. 4) Otherwise it is always one of four pending orders: entry BELOW the live price on a BUY = BUY LIMIT; entry ABOVE the live price on a BUY = BUY STOP; entry ABOVE the live price on a SELL = SELL LIMIT; entry BELOW the live price on a SELL = SELL STOP. LIMIT means the market comes back to your level (pullback or retest, trade against the last move). STOP means the market must break through your level first (breakout or breakdown, trade with the move). Examples: price 2650, support at 2640 holding, you want to buy the bounce = BUY LIMIT 2640. Price 2650, resistance 2660, buy only after it breaks = BUY STOP 2661. Price 2650, supply at 2662, sell the rally = SELL LIMIT 2662. Price 2650, support 2640, sell only after it breaks = SELL STOP 2639. Never give a BUY with the entry on the wrong side for its type. State the order type at the start of trigger.why, for example "BUY LIMIT at the H1 order block".\n`;
+const STRATEGY_BOOST=`EXTRA STRATEGY KNOWLEDGE (use it to improve accuracy; it never replaces the rules above):
+- TOP-DOWN: D1 and H4 give the bias, H1 gives the structure, M15 gives the trigger. Prefer trades with the H4 and H1 trend. A counter-trend trade needs a closed-candle CHoCH and a lower confidence.
+- LIQUIDITY FIRST: the best entries come after price sweeps liquidity (equal highs or lows, previous day or week high or low, the Asian range, a swing) and then displaces with a strong candle that leaves a fair value gap. Enter on the retest of that FVG or order block, ideally inside the 0.62 to 0.79 retracement (optimal trade entry) of the displacement leg. This is usually a LIMIT order.
+- BREAKER AND MITIGATION BLOCKS: an order block that failed and was broken becomes a breaker; a retest of it in the new direction is a high quality entry. Price taking out a minor high or low just before the real move (inducement) is a trap, not a trigger.
+- WYCKOFF: a spring (sweep below a range then back inside) is a BUY idea; an upthrust (sweep above then back inside) is a SELL idea, only after a closed candle confirms.
+- SESSIONS (South Africa time): London 09:00 to 12:00 and New York 14:00 to 17:00 give the cleanest moves; the Asian session is mostly range and its high and low become liquidity targets. Avoid fresh market entries in the last hour before a high-impact news release.
+- MOMENTUM: confirm with strong candle bodies, RSI divergence at a higher-timeframe level, ADX above 20 for trend trades, and a sloping EMA 20 or 50. A flat market in the middle of a range is a WAIT.
+- ROUND NUMBERS AND HIGHER-TIMEFRAME LEVELS: .000 and .500 levels, the daily open, previous day high and low act as magnets and barriers.
+- AVOID: buying into a higher-timeframe supply zone or selling into demand; chasing price more than 2 ATR away from EMA 20 or 50; entering after three or more one-direction impulse candles with no pullback; stacking trades while a signal on the same symbol is still open.
+- FIXED REWARD: the app sets the take profit at exactly 1.5 times the distance from entry to stop loss. So place the stop loss at the real invalidation level, then check that the 1.5R target is not behind a major opposing level (higher-timeframe supply or demand, previous day or week high or low, a round number). If it is, lower the confidence a lot or return WAIT.
+- QUALITY GATE: count independent confluences (trend alignment, liquidity sweep, order block or FVG, fib 0.5 to 0.79, session, momentum, clean structure). Three or more are needed for confidence above 70; below two, return WAIT.
+- SCREENSHOT LABELS: the timeframe labels were chosen by the user. If the timeframe printed on a chart (for example XAUUSD,H1) is different from its label, trust the chart.
 `;
 const SYSTEM=`You are the chart-reading engine for an MT5 expert advisor called IFX_SNIPPER2.0. You receive MT5 chart screenshots (each labelled with its timeframe) and must judge whether the EA's entry conditions are met right now, using only what is visible.
 
@@ -1007,7 +1026,7 @@ WORK WITH WHAT YOU ARE GIVEN. One screenshot is enough. Never refuse, never retu
 - BE ACCURATE AND USE THE CHART: return NONE when none of the three setups is visible, when the groups clearly conflict, or when the chart is unreadable. When a setup is visible and the timeframes mostly agree, give the signal with an honest lower confidence and clear warnings instead of NONE. One timeframe disagreeing is normal, so lower the confidence rather than refusing. Use "pass": null for any group you cannot observe. Mark the nearest support and resistance and supply and demand zones only where visible. Fibonacci: use the latest clear swing; pass only when price sits in the 0.382 to 0.786 retracement. Never read prices you cannot see clearly. State limitations in at most two short warnings.
 Read price levels from the price axis carefully. Never invent numbers; use null and add a warning when unreadable.
 ${ORDER_PRIMER}
-CONFIDENCE CALIBRATION (guidance, not a gate): do not reuse the same number every time. Start at 50. Add about 6 for each timeframe beyond two that supports the direction, 5 for a clean closed-candle trigger at or near the entry, 4 for every two vote groups that pass, 4 when the stop and target sit on clear structure. Subtract about 6 for each disagreeing H4 or H1, 5 when an opposing key level is close to the target, 5 when price looks extended, 4 when several groups are unknown. Typical range 35 to 90; above 85 only when almost everything agrees. A weak but valid setup still gets a signal with a low honest number.
+${ORDER_RULES}${STRATEGY_BOOST}CONFIDENCE CALIBRATION (guidance, not a gate): do not reuse the same number every time. Start at 50. Add about 6 for each timeframe beyond two that supports the direction, 5 for a clean closed-candle trigger at or near the entry, 4 for every two vote groups that pass, 4 when the stop and target sit on clear structure. Subtract about 6 for each disagreeing H4 or H1, 5 when an opposing key level is close to the target, 5 when price looks extended, 4 when several groups are unknown. Typical range 35 to 90; above 85 only when almost everything agrees. A weak but valid setup still gets a signal with a low honest number.
 SPEED AND COMPLETENESS: answer fast. Always return ALL 9 groups (mtf_sr, indicators, liquidity_fvg, frvp, smc, fib, po3, trend_lines, patterns), each with pass true/false, or null when that information is not visible on the screenshot (for example no RSI, MACD, volume profile or Fibonacci drawn). Never mark a missing indicator as false. Order as listed, even when the trigger is NONE. Then return ALL 16 modules, plus tf (the bias of each timeframe you were given a screenshot for, NA for the others), dxy and usd_alignment. Keep every "why" under 12 words, at most 3 short reasons, at most 2 short warnings. No preamble, JSON only.
 SETUP TYPES (all valid, flexible by default): EA break and retest, PULLBACK into EMA/FVG/support-resistance within the trend, SWEEP of liquidity then a confirmed CHoCH. A lower-confidence signal is better than NONE when the chart is readable and the setup is valid. Recognise rejection candles, engulfing/displacement, BOS and CHoCH, order-block reactions, liquidity grabs, breakouts with retests and confirmed double tops/bottoms. Only the setup, structure and a valid entry are mandatory; the nine groups only add confidence. If direction is valid but entry is missing, set trigger.why to the exact missing confirmation (for example: waiting for M15 bullish confirmation, price must retest the broken resistance, liquidity swept but CHoCH not confirmed, price too extended, setup forming near support). STRATEGY CONTEXT: trade with the H1 and H4 trend (EMA50, EMA200, ADX). Valid triggers: (a) a breakout of a consolidation range by a strong expansion candle, preferably on its retest; (b) a bounce from, or a break and retest of, a clean trend line drawn through two swing points; (c) a liquidity sweep reversal; (d) a head and shoulders, inverse head and shoulders, double top or double bottom confirmed by a close through the neckline. Avoid counter-trend entries unless it is a sweep reversal.\nTIMING RULES (mandatory, accuracy over frequency): do NOT give an early signal and do NOT give a late signal. EARLY = the last closed M15 or H1 candle is still a strong move against your direction, a spike candle has just printed, price has not yet reached the level or retest you name, or the structure break has not CLOSED beyond its level. LATE = price has already run more than about 2 ATR(M15) beyond its EMA50 or more than about 3 ATR(M15) in your direction over the last 6 candles, or the entry you name is not the current tradeable price. A tradeable signal has momentum turning your way on a closed candle, price at or near the entry, a stop beyond the invalidating structure of at least 1 ATR(M15) so normal noise and stop hunts do not take it out, and no large opposing candle just before it. Use WAIT only when an EARLY or LATE condition is clearly present, and say what must happen first (for example: wait for a closed M15 candle above X). When most checks agree and none of those conditions is clearly true, give the signal.
 Reply with ONLY a JSON object, no markdown:
@@ -1343,9 +1362,9 @@ $('go').onclick=async()=>{
   usdEnsure(3*36e5);
   st('Checking real candles...');
   const Mp=window.TZMTF?window.TZMTF.load(symv()).catch(()=>null):Promise.resolve(null);
-  const R=await Promise.race([eaCheck(symv()),new Promise(r=>setTimeout(()=>r({why:'candle check timed out'}),12000))]).catch(e=>({why:e.message}));
+  const R=await Promise.race([eaCheck(symv()),new Promise(r=>setTimeout(()=>r({why:'candle check timed out'}),8000))]).catch(e=>({why:e.message}));
   st('Checking D1, H4, H1 and M15 on live candles...');
-  const M=await Promise.race([Mp,new Promise(r=>setTimeout(()=>r(null),9000))]);
+  const M=await Promise.race([Mp,new Promise(r=>setTimeout(()=>r(null),6000))]);
   if(M&&M.ok)R.live=true;
   const ctx=eaCtx(R)+(window.TZMTF?window.TZMTF.ctx(M)+window.TZMTF.styleCtx():'');
   const labels=use.map((s,i)=>`Image ${i+1} = ${tfl(s)}`).join('\n');
@@ -1372,7 +1391,7 @@ $('go').onclick=async()=>{
       content.push({type:'text',text:`Symbol: ${symv()||'read from chart'}. Apply the EA logic and return the JSON only.\n\n${usdCtx()}${ctx}`});
       st('Reading chart...');
       const call=mt=>proxy({model:MODEL,max_tokens:mt,think:'minimal',system:SYSTEM,messages:[{role:'user',content}]});
-      txt=await call(3000);try{parse(txt)}catch(x){st('The reply was cut off, retrying...');txt=await call(5000)}
+      txt=await call(4500);try{parse(txt)}catch(x){st('The reply was cut off, retrying...');txt=await call(7000)}
     }else if(viaPuter){
       st('Reading chart... (sign in to Puter if asked)');
       txt=await puterAsk(prompt,use.map(s=>s.url));
@@ -1380,7 +1399,7 @@ $('go').onclick=async()=>{
       const res=await ai(prompt,{images:use.map(s=>b64blob(s.b64,'image/jpeg')),modelTier:'default',cache:false,onText:({text})=>{st('Reading chart...');live(text)}});
       txt=res.text;
     }
-    let d=parse(txt);d=eaMerge(d,R);if(window.TZMTF)d=window.TZMTF.scanMerge(d,M);d=sigValidate(d,R);trkAdd(d,symv(),R.relay?'PC EA':(R.eng&&R.eng.dir!=='NONE'&&!R.eng.blocked)?'EA engine':'AI');
+    let d=parse(txt);d=eaMerge(d,R);if(window.TZMTF)d=window.TZMTF.scanMerge(d,M);d=sigValidate(d,R);
     for(const [k] of CK.slice(1)){mark(k,!!(d.groups&&d.groups[k]&&d.groups[k].pass));await new Promise(r=>setTimeout(r,30))}
     mark('trigger',!!(d.trigger&&(d.trigger.direction==='BUY'||d.trigger.direction==='SELL')));
     show(d);ck.hidden=true;st('');
@@ -1448,7 +1467,15 @@ function show(d){
   else o.appendChild(sigPanel({dir:sig,sym,conf:d.confidence,entry,sl,ot,why:rs||(d.trigger&&d.trigger.why)||'',trend:(d.mtf&&d.mtf.sum)||''}));
 }
 const fmtn=v=>typeof v==='number'?String(+v.toFixed(6)):'n/a';
-function H(){try{return JSON.parse(ls('ifx_hist')||'[]')}catch(e){return []}}
+const dayKey=t=>new Date(t).toLocaleDateString('en-CA',{timeZone:'Africa/Johannesburg'});
+function H(){
+  let a=[];try{a=JSON.parse(ls('ifx_hist')||'[]')}catch(e){a=[]}
+  if(!Array.isArray(a))a=[];
+  const d=dayKey(Date.now()),keep=a.filter(x=>x&&x.t&&dayKey(x.t)===d);   /* only today's signals; yesterday's are deleted */
+  if(keep.length!==a.length){try{ls('ifx_hist',JSON.stringify(keep.slice(0,100)))}catch(e){}}
+  return keep}
+window.__hday=dayKey(Date.now());
+setInterval(()=>{const d=dayKey(Date.now());if(d!==window.__hday){window.__hday=d;H();try{renderHome()}catch(e){}try{window.dispatchEvent(new Event('ifx-newday'))}catch(e){}}},30000);
 function wr(h){ls('ifx_hist',JSON.stringify(h.slice(0,100)))}
 function hist(r){const h=H();h.unshift(r);wr(h)}
 function tab(n){
@@ -2419,10 +2446,13 @@ async function mtf(path,q,o){
   try{r=await fetch(MT_URL+p+'?'+P.toString(),{headers:{accept:'application/json, text/plain'}});txt=await r.text()}
   catch(e){throw mkE('Could not reach mtapi.io. Check your internet connection.',0)}
   let j=txt;try{j=JSON.parse(txt)}catch(e){}
-  if(!r.ok){
+  /* mtapi.io reports many errors as HTTP 200/201 with a JSON error body, so look inside the body as well */
+  const bodyErr=j&&typeof j==='object'&&!Array.isArray(j)&&j.message!==undefined&&(j.code!==undefined||j.error!==undefined||j.errorCode!==undefined||r.status===201)&&j.ticket===undefined&&j.bid===undefined&&j.balance===undefined&&j.retcode===undefined;
+  if(!r.ok||bodyErr){
     const m=(j&&typeof j==='object'?(j.message||j.error||j.title):String(j||'')).toString().slice(0,200);
-    if(r.status===401||/invalid.*(id|token)|not connected|session/i.test(m))throw mkE('Your MT5 session expired. Disconnect and connect again.',401);
-    throw mkE(m||('mtapi.io error ('+r.status+')'),r.status)}
+    const code=bodyErr&&j.code!==undefined?' ['+j.code+']':'';
+    if(r.status===401||/invalid.*(id|token)|not connected|session/i.test(m))throw mkE('Your MT5 session expired. Disconnect and connect again. ('+m+')',401);
+    throw mkE((m||('mtapi.io error ('+r.status+')'))+code,r.ok?400:r.status)}
   if(p==='/OpenedOrders'&&Array.isArray(j))j=j.map(x=>Object.assign({},x,{volume:x.volume!=null?x.volume:x.lots,type:x.type!=null?x.type:x.orderType,openPrice:x.openPrice!=null?x.openPrice:x.price}));
   return{status:r.status,json:j};
 }
@@ -2744,6 +2774,7 @@ async function mtOpenConfirm(dir,sym,entry,sl,tp,lots0,cnt0,otHint){
   const row=(n,v)=>{const r=el('div',null,'xmr');r.append(el('span',n),el('b',v));body.appendChild(r)};
   row('Account',(BROKER_LABELS[MT.br]||'MT5')+' / '+(MT.login||MT.id.slice(0,8)+'...')+(MT.server?' / '+MT.server:''));
   row('Broker symbol',pre.bsym);
+  if(!pre.q&&mtLastErr)body.appendChild(el('small','Price check said: '+mtLastErr,'mut'));
   row('Market price now',pre.q?(dir==='BUY'?'ask ':'bid ')+fmtn(px):'sent at the broker market price');
   row('Order type',pend?ot+' (pending order)':'MARKET (instant order)');
   row('AI entry',fmtn(entry));row('Stop loss',fmtn(sl));row('Take profit',fmtn(tp));
@@ -3376,60 +3407,6 @@ function fctShow(){
 }
 const k_=R=>R.k+' of '+R.n;
 setTimeout(fctShow,0);
-/* ===== SIGNAL OUTCOME TRACKER ===== */
-const trkGet=()=>{try{return JSON.parse(ls('ifx_trk')||'[]')}catch(e){return[]}};
-const trkSet=a=>ls('ifx_trk',JSON.stringify(a.slice(0,150)));
-function trkAdd(d,sym,src){
-  if(!d||!d.trigger||!/^(BUY|SELL)$/.test(String(d.trigger.direction))||!(d.entry>0&&d.sl>0&&d.tp>0)||!sym)return;
-  const a=trkGet(),id=Date.now();
-  a.unshift({id,v:2,sym,dir:d.trigger.direction,entry:+d.entry,sl:+d.sl,tp:+d.tp,t:id,src,res:'pending',spread:null});trkSet(a);trkShow();
-  if(MT.id)mtResolve(sym).then(b=>mtQuote(b)).then(q=>{if(q){const b2=trkGet(),x=b2.find(y=>y.id===id);if(x){x.spread=+(q.ask-q.bid).toFixed(6);trkSet(b2);trkShow()}}}).catch(()=>{});
-}
-/* Net R after costs. Theoretical only: spread recorded at signal time plus your extra cost, entered as a % of the stop distance so it works on every symbol. */
-const trkCost=x=>(+x.spread||0)+(parseFloat(ls('ifx_cost'))||0)/100*Math.abs(x.entry-x.sl);
-function trkR(x){
-  if(x.res!=='win'&&x.res!=='loss')return null;
-  const risk=Math.abs(x.entry-x.sl),rew=Math.abs(x.tp-x.entry);if(!(risk>0))return null;
-  const c=trkCost(x);return x.res==='win'?(rew-c)/risk:-(risk+c)/risk;
-}
-async function trkCheck(){
-  if(!MT.id)return;const a=trkGet();let ch=0;
-  for(const s of a){
-    if(s.res!=='open'&&s.res!=='pending')continue;
-    if(!s.v&&!s.fillT){s.fillT=s.t;s.legacy=true}   /* old records had no fill check, so they stay as before */
-    if(s.res==='pending'&&Date.now()-s.t>864e5){s.res='unfilled';ch++;continue}
-    if(Date.now()-s.t>3*864e5){s.res=s.fillT?'expired':'unfilled';ch++;continue}
-    try{
-      const c=await eaCandles(await mtResolve(s.sym),'M15',400);if(!c)continue;
-      for(const x of c){
-        const t=new Date(x.t).getTime();if(!(t>s.t)||t+9e5>Date.now())continue;
-        if(!s.fillT){if(!(x.l<=s.entry&&x.h>=s.entry))continue;s.fillT=t;s.res='open';ch++}
-        const sl=s.dir==='BUY'?x.l<=s.sl:x.h>=s.sl,tp=s.dir==='BUY'?x.h>=s.tp:x.l<=s.tp;
-        if(sl||tp){s.res=sl?'loss':'win';s.exitT=t;s.ambig=sl&&tp;ch++;break}
-      }
-    }catch(e){}
-  }
-  if(ch){trkSet(a);trkShow()}
-}
-function trkShow(){
-  const b=$('trk');if(!b)return;b.textContent='';b.appendChild(el('h2','Signal outcomes (theoretical)'));const a=trkGet();
-  b.appendChild(el('small','These are not executed trades. Each signal is replayed on MT5 M15 candles: it must first touch its entry, then the first of SL or TP counts. Costs are the spread recorded at signal time plus your extra cost below, as a share of the stop distance.','mut'));
-  const cl=el('div',null,'row2');const lab=el('label','Extra cost per trade (commission + slippage) as % of the stop distance, e.g. 5');lab.htmlFor='trkcost';
-  const inp=el('input');inp.id='trkcost';inp.type='number';inp.step='any';inp.min='0';inp.value=ls('ifx_cost')||'0';inp.onchange=()=>{ls('ifx_cost',String(Math.max(0,parseFloat(inp.value)||0)));trkShow()};
-  b.append(lab,inp);
-  if(!a.length){b.appendChild(el('p','No tracked signals yet. Every BUY or SELL the scanner gives is saved here and checked against MT5 candles.','mut'));return}
-  const w=a.filter(x=>x.res==='win').length,l=a.filter(x=>x.res==='loss').length,o=a.filter(x=>x.res==='open').length,pn=a.filter(x=>x.res==='pending').length,uf=a.filter(x=>x.res==='unfilled').length;
-  b.appendChild(el('p',(w+l?'Win rate '+Math.round(100*w/(w+l))+'%':'No closed signals yet')+' | '+w+' wins, '+l+' losses, '+o+' open, '+pn+' waiting for entry, '+uf+' never filled','mut'));
-  const rs=a.map(trkR).filter(v=>v!=null),sum=rs.reduce((x,y)=>x+y,0);
-  if(rs.length)b.appendChild(el('p','Net result after costs: '+(sum>=0?'+':'')+sum.toFixed(2)+' R over '+rs.length+' closed signals (average '+(sum/rs.length>=0?'+':'')+(sum/rs.length).toFixed(2)+' R)','mut'));
-  const nospr=a.filter(x=>(x.res==='win'||x.res==='loss')&&!(+x.spread)).length;
-  if(nospr)b.appendChild(el('small',nospr+' closed signal'+(nospr>1?'s have':' has')+' no recorded spread (made without MT5 connected or before this feature), so their costs are understated.','warn'));
-  const am=a.filter(x=>x.ambig).length;if(am)b.appendChild(el('small',am+' signals touched both SL and TP in one candle and count as losses, because the order inside a candle is unknown.','warn'));
-  ['EA engine','PC EA','AI'].forEach(n=>{const x=a.filter(q=>q.src===n&&(q.res==='win'||q.res==='loss'));if(x.length)b.appendChild(el('small',n+': '+Math.round(100*x.filter(q=>q.res==='win').length/x.length)+'% of '+x.length+' closed','mut'))});
-  const t=el('table');
-  a.slice(0,8).forEach(x=>{const r=el('tr'),R=trkR(x);r.append(el('td',x.res.toUpperCase(),x.res==='win'?'p':x.res==='loss'?'f':'n'),el('td',x.dir+' '+x.sym+' at '+fmtN(x.entry)+' ('+sastD(x.t)+' '+sastT(x.t)+')'+(x.fillT&&!x.legacy?', filled '+sastT(x.fillT):'')+(x.exitT?', closed '+sastD(x.exitT)+' '+sastT(x.exitT):'')+(R!=null?', '+(R>=0?'+':'')+R.toFixed(2)+' R':'')));t.appendChild(r)});
-  b.appendChild(t);b.appendChild(el('small','Results need MT5 connected. Spread, commission and slippage on a real account will differ from these figures.','mut'));
-}
 /* ===== US OPEN: candle facts, shared forecast, auto refresh ===== */
 const NYD=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric'});
 const nyp=t=>{const o={};NYD.formatToParts(new Date(t)).forEach(p=>{o[p.type]=+p.value});return o};
@@ -3510,12 +3487,11 @@ async function autoRefresh(){
       const o=nextOpen();
       if(o&&o.t-now<8*36e5){rfLast.open=now;let l=null;try{l=JSON.parse(ls('ifx_olast')||'null')}catch(e){}if(!l||now-l.at>20*60e3)runOpen(false,true)}
     }
-    if(MT.id&&now-rfLast.trk>5*60e3){rfLast.trk=now;trkCheck();fctEvaluate()}
+    if(MT.id&&now-rfLast.trk>5*60e3){rfLast.trk=now;fctEvaluate()}
   }catch(e){}
 }
 setInterval(autoRefresh,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoRefresh()});
-setTimeout(trkShow,0);
 /* ================= Greeting when the app opens (South African time) ================= */
 const SA_H=new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Johannesburg',hourCycle:'h23',hour:'numeric'});
 const saHour=(t)=>+SA_H.format(new Date(t==null?Date.now():t));
@@ -3666,7 +3642,7 @@ const DEV=(()=>{let d=ls('ifx_dev');if(!/^[a-z0-9]{16,64}$/.test(d||'')){const a
 async function accCall(action,email){const r=await fetch(SITE()+'/api/access',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,email,device:DEV,owner:OWNER_EMAIL})});if(!r.ok){const e=new Error('HTTP '+r.status);e.status=r.status;throw e}return r.json()}
 function gShow(msg){G.style.display='flex';document.body.style.overflow='hidden';if(msg)$('gmsg').textContent=msg}
 function gHide(){G.style.display='none';document.body.style.overflow=''}
-const SELLER=OWNER_EMAIL;
+const SELLER='tumelo_fx.trader';
 function wcText(){const h=new Date().getHours();
  if(h>=5&&h<12)return['Good morning Sir/Mam!','Your email has been sent to '+SELLER+'.','Waiting for approval.','Have a blessed day & God bless you \u{1F64F}\u{1F3FD}'];
  if(h>=12&&h<18)return['Good afternoon Sir/Mam!','Your Email has been sent to '+SELLER+'.','Waiting for approval.','Hope you\u2019re having a blessed day. God bless you.'];
@@ -3750,7 +3726,7 @@ addEventListener('scroll',()=>{sgEl.classList.toggle('mini',scrollY>110);if(scro
 setInterval(()=>{const s=bnGet();if(s&&!s.dismissed&&sgEl.classList.contains('on'))paintBn(s)},30e3);
 /* every new signal refreshes the whole app, not just the banner */
 function signalFx(s){
-  try{renderHome()}catch(e){}try{trkShow()}catch(e){}
+  try{renderHome()}catch(e){}
   try{navigator.vibrate&&navigator.vibrate([140,70,140])}catch(e){}
   const ttl='\u25cf '+(s.ot&&s.ot!=='MARKET'?s.ot:s.sig)+' '+s.sym+' | '+T0;document.title=ttl;
   const back=()=>{if(!document.hidden)document.title=T0};document.addEventListener('visibilitychange',back);setTimeout(back,12000);
@@ -4076,7 +4052,7 @@ VOTE GROUPS for your direction (pass true/false, or null when the data cannot sh
 LEVELS. entry: the best price to enter, normally the current price or the retest/pullback level; you may add entry_zone [low, high]. sl: beyond the structure that invalidates the setup plus a buffer of about 0.5 to 1 M15 ATR, never tight against price. tp: the next significant support/resistance, swing point or profile level in the direction. Reward:risk must reach the minimum in the user message. Levels are fixed: no trailing, no breakeven. For WAIT return null for entry, entry_zone, sl and tp.
 WEIGHTING (mandatory): H4 and H1 decide direction; D1 is context only and must not veto a valid H4/H1 setup; M15 confirms entry timing. One disagreeing timeframe lowers confidence, it is not a NO TRADE. The three valid setups are EA break-and-retest, trend-continuation PULLBACK and liquidity SWEEP + CHoCH; accept any of them when structure and a closed-candle trigger are clear. Accept price inside a reasonable entry zone (return entry_zone). Keep a structural take-profit when it gives at least the required reward:risk. Return signal WAIT with the exact missing confirmation in trigger.why when a setup is forming. The user message carries a SENSITIVITY (strict, balanced or relaxed). Strict: only clean A or C setups. Balanced: A, B or C with a clear majority. Relaxed: also take a lower-confidence B when at least H4 and H1 agree.
 ${ORDER_PRIMER}
-CONFIDENCE CALIBRATION (guidance, not a gate): do not reuse the same number every time. Start at 50. Add about 6 for each timeframe beyond two that supports the direction, 5 for a clean closed-candle trigger at or near the entry, 4 for every two vote groups that pass, 4 when the stop and target sit on clear structure. Subtract about 6 for each disagreeing H4 or H1, 5 when an opposing key level is close to the target, 5 when price looks extended, 4 when several groups are unknown. Typical range 35 to 90; above 85 only when almost everything agrees. A weak but valid setup still gets a signal with a low honest number.
+${ORDER_RULES}${STRATEGY_BOOST}CONFIDENCE CALIBRATION (guidance, not a gate): do not reuse the same number every time. Start at 50. Add about 6 for each timeframe beyond two that supports the direction, 5 for a clean closed-candle trigger at or near the entry, 4 for every two vote groups that pass, 4 when the stop and target sit on clear structure. Subtract about 6 for each disagreeing H4 or H1, 5 when an opposing key level is close to the target, 5 when price looks extended, 4 when several groups are unknown. Typical range 35 to 90; above 85 only when almost everything agrees. A weak but valid setup still gets a signal with a low honest number.
 Keep each analysis under 40 words and each why under 12 words, at most 4 reasons, 3 invalidation conditions and 2 warnings. No preamble, JSON only.
 Reply with ONLY this JSON object, no markdown:
 {"signal":"BUY"|"SELL"|"WAIT","confidence":0-100,"setup":string|null,"entry":number|null,"entry_zone":[number,number]|null,"sl":number|null,"tp":number|null,"d1":{"bias":"BULL"|"BEAR"|"NEUTRAL","analysis":string,"levels":[number]},"h4":{"bias":"BULL"|"BEAR"|"NEUTRAL","analysis":string,"levels":[number]},"h1":{"bias":"BULL"|"BEAR"|"NEUTRAL","analysis":string,"levels":[number]},"m15":{"bias":"BULL"|"BEAR"|"NEUTRAL","analysis":string,"levels":[number]},"trigger":{"direction":"BUY"|"SELL"|"NONE","why":string},"groups":{"mtf_sr":{"pass":true|false|null,"why":string},"indicators":{"pass":true|false|null,"why":string},"liquidity_fvg":{"pass":true|false|null,"why":string},"frvp":{"pass":true|false|null,"why":string},"smc":{"pass":true|false|null,"why":string},"fib":{"pass":true|false|null,"why":string},"po3":{"pass":true|false|null,"why":string},"trend_lines":{"pass":true|false|null,"why":string},"patterns":{"pass":true|false|null,"why":string}},"reasons":[string],"invalidation":[string],"warnings":[string]}`;
@@ -5044,8 +5020,8 @@ function start(){clearInterval(tm);p=0;T0=Date.now();set(1);ov.classList.remove(
   const m=/(\d+)[, ]+(\d+)[, ]+(\d+)/.exec(bg||'');if(m&&!/rgba\(0, 0, 0, 0\)/.test(bg)){ov.style.background=bg;ov.style.color=((+m[1]*299+ +m[2]*587+ +m[3]*114)/1000>150)?'#0b1020':'#fff'}}catch(e){}
  try{if(typeof tab==='function')tab('scan');const sh=(typeof shots!=='undefined'&&shots[0])||null;im.src=sh?(sh.url||('data:image/jpeg;base64,'+sh.b64)):''}catch(e){}
  ov.classList.add('on');
- tm=setInterval(()=>{const c=q('chk'),m=c&&/(\d+)\s*\/\s*9/.exec(c.textContent||''),f=m?12+(+m[1])*8:0,el=(Date.now()-T0)/1000;set(Math.max(Math.min(88,el*8)+(el>11?Math.min(6,(el-11)*.2):0),f>94?94:f))},200)}
-function end(){clearInterval(tm);try{if(sbOn&&window.SB){SB.off();sbOn=false}}catch(e){}const st=q('status');if(st&&st.className==='err'){ov.classList.remove('on');return}
+ tm=setInterval(()=>{const c=q('chk'),m=c&&/(\d+)\s*\/\s*9/.exec(c.textContent||''),f=m?12+(+m[1])*8:0,el=(Date.now()-T0)/1000,ex=Math.max(8,Math.min(40,+ls('ifx_scan_s')||14));set(Math.max(94*(1-Math.exp(-el/(ex*.5))),f>94?94:f))},200)}
+function end(){clearInterval(tm);try{const d=(Date.now()-T0)/1000;if(d>3&&d<120){const o=+ls('ifx_scan_s')||d;ls('ifx_scan_s',String(Math.round(o*.5+d*.5)))}}catch(e){}try{if(sbOn&&window.SB){SB.off();sbOn=false}}catch(e){}const st=q('status');if(st&&st.className==='err'){ov.classList.remove('on');return}
  set(100);let r=null;try{r=H()[0]}catch(e){}
  const trade=r&&r.t>=T0-1000&&(r.sig==='BUY'||r.sig==='SELL');
  setTimeout(()=>{if(trade){ov.classList.add('done');setTimeout(()=>{ov.classList.remove('on','done')},1500)}else ov.classList.remove('on')},350)}
